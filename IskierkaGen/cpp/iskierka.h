@@ -227,6 +227,16 @@ public:
             return;
         }
 
+        // if Variable only contains HashExpression with weight == 0
+        // prepare a discrete uniform distribution
+        if (m_totalWeight == 0) {
+            m_totalWeight = static_cast<int64_t>(m_units.size());
+
+            for (size_t i = 0; i < m_units.size(); i++) {
+                m_weights[i] = static_cast<int64_t>(i + 1);
+            }
+        }
+
         m_distribution = std::make_unique<std::uniform_int_distribution<int64_t>>(0, m_totalWeight - 1);
     };
 
