@@ -91,7 +91,7 @@ pair of
 ```
 
 Hash expressions can be weighted to shape a desired probability distribution. By default their weight is 1.
-Only positive integers allowed!
+Only nonnegative integers allowed!
 In this code, the first output pattern is the most important. 
 It will be picked 60% of the times. The second is picked 30% of the times and the third with the default weight of 1 is used rarely (10%).
 The 25% probability is used for every hash expression of *ticketsNumber*.
