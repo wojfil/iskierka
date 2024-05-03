@@ -176,6 +176,7 @@ private:
 };
 
 
+// Variable is a collection of all Hash Expressions named the same
 struct Variable
 {
 public:
