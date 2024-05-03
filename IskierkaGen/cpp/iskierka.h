@@ -323,6 +323,7 @@ private:
             return;
         }
 
+        // directory exists, but there is no file with extension *.iski
         if (src.empty()) {
             error(concat("Iskierka error: not a single *.iski file has been found in directory '", path, "'."));
             return;
