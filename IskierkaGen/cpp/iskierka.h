@@ -353,9 +353,19 @@ private:
             }
         }
 
+        // check a very rare error if files were mutated during parsing
+        for (auto& v : m_variables) {
+            if (v.second.isEmpty()) {
+                error(concat("Iskierka error: variable '", v.first, "' does not have any Hash Expression. ",
+                    "The source code file was probably mutated by an external program during parsing. Try to run again."
+                ));
+                return;
+            }
+        }
+
         // seal Variables => prepare probability distributions for them
-        for (auto& id : m_variables) {
-            id.second.seal();
+        for (auto& v : m_variables) {
+            v.second.seal();
         }
        
         // if everything is fine, set flag m_isParsed and load m_rootPtr for future fast access
