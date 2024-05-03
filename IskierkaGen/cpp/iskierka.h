@@ -240,6 +240,10 @@ public:
         m_distribution = std::make_unique<std::uniform_int_distribution<int64_t>>(0, m_totalWeight - 1);
     };
 
+    bool isEmpty() const 
+    {
+        return m_units.empty();
+    };
 
 private:
     std::vector<HashExpression> m_units;
