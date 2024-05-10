@@ -21,7 +21,7 @@ See below the process of Perun2 code generation along with text in English.
 
 Directory IskierkaGen contains a header-only C++ implementation of IskierkaGen. It automatically supports both Win32 API and POSIX.
 
-## How does it works?
+## How does it work?
 
 This is a context-free rewriting system similar to the Lindenmayer system (link [here](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime we apply them to variables until only constants are left. 
 
