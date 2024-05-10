@@ -21,6 +21,12 @@ See below the process of Perun2 code generation along with text in English.
 
 Directory IskierkaGen contains a header-only C++ implementation of IskierkaGen. It automatically supports both Win32 API and POSIX.
 
+## How does it works?
+
+This is a context-free rewriting system similar to the Lindenmayer system (link [here](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime we apply them to variables until only constants are left. 
+
+There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and its result is applied to every variable instance. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
+
 ## Codebases
 
 Iskierka has been initially designed by WojFil Games for code generation of the Perun2 programming language.
