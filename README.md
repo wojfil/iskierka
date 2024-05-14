@@ -25,7 +25,7 @@ Directory IskierkaGen contains a header-only C++ implementation of IskierkaGen. 
 
 This is a context-free rewriting system similar to the Lindenmayer system (link [here](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
 
-There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instance get the same value here. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation.
+There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instances get the same value. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
 
 ## Codebases
 
