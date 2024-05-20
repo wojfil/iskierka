@@ -28,10 +28,10 @@ namespace iskierka
 // extension of Iskierka code files
 static constexpr char EXTENSION[] = "iski";
 
-// this is the name of the root Variable, we start evaluation from here
+// this is the name of the root variable, we start evaluation from here
 static constexpr char ROOT[] = "output";
 
-// prefix of Variables in Iskierka code
+// prefix of variables in Iskierka code
 static constexpr char PREFIX = '_';
 
 // the default limit of function recursive calls, it prevents stack overflows
@@ -122,7 +122,7 @@ private:
 };
 
 
-// reference to some Variable
+// reference to some variable
 struct VariableUnit : Unit
 {
 public:
@@ -176,7 +176,7 @@ private:
 };
 
 
-// Variable is a collection of all Hash Expressions named the same
+// variable is a collection of all hash expressions named the same
 struct Variable
 {
 public:
@@ -204,7 +204,7 @@ public:
     };
 
     // insert new values
-    // but only if this Variable is not sealed
+    // but only if this variable is not sealed
     bool insert(units_t& natural, units_t& programming, const int64_t weight)
     {
         if (m_sealed) {
@@ -218,7 +218,7 @@ public:
         return true;
     };
 
-    // Variable is sealed only once
+    // variable is sealed only once
     // we prepare the probability distribution, so the lists no longer can be extended
     void seal() 
     {
@@ -227,7 +227,7 @@ public:
             return;
         }
 
-        // if Variable only contains HashExpression with weight == 0
+        // if variable only contains hash expressions with weight == 0
         // prepare a discrete uniform distribution
         if (m_totalWeight == 0) {
             m_totalWeight = static_cast<int64_t>(m_units.size());
@@ -356,19 +356,19 @@ private:
         // check a very rare error if files were mutated during parsing
         for (auto& v : m_variables) {
             if (v.second.isEmpty()) {
-                error(concat("Iskierka error: variable '", v.first, "' does not have any Hash Expression. ",
+                error(concat("Iskierka error: variable '", v.first, "' does not have any hash expression. ",
                     "The source code file was probably mutated by an external program during parsing. Try to run again."
                 ));
                 return;
             }
         }
 
-        // seal Variables => prepare probability distributions for them
+        // seal variables => prepare probability distributions for them
         for (auto& v : m_variables) {
             v.second.seal();
         }
        
-        // if everything is fine, set flag m_isParsed and load m_rootPtr for future fast access
+        // if everything is fine, set value m_isParsed and load m_rootPtr for future fast access
         m_rootPtr = &m_variables.find(ROOT)->second;
         m_isParsed = true;
     };
@@ -561,7 +561,7 @@ private:
 
 
 // the first pass scans all source files
-// and prepares a map of all used Variables
+// and prepares a map of all used variables
 // this is the only thing we do here (besides some error checks)
     bool firstPass(const std::string& filePath)
     {
@@ -615,7 +615,7 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
+                            error(concat("character '", line[i], "' is not allowed in a variable name."), filePath, lineId);
                             file.close();
                             return false;
                         }
