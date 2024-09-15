@@ -3,7 +3,7 @@
 
 # Iskierka
 
-Iskierka is a declarative programming language used to associate natural language text with programming language code.
+Iskierka is a declarative programming language whose purpose is to associate natural language text with programming language code.
 
 ```
 #output
@@ -14,7 +14,7 @@ print('hello, world');
 ## IskierkaGen
 
 IskierkaGen establishes an infinite source of synthetic data for AI based on rules from some Iskierka codebase.
-It constructs a pair of random strings (natural language text and programming language code) that are correlated.
+It constructs pairs of random strings (natural language text and programming language code) that are correlated.
 See below the process of Perun2 code generation along with text in English.
 
 ![Codegen example](perun2gen.gif)
