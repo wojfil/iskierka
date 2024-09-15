@@ -7,7 +7,7 @@ Iskierka is a declarative programming language whose purpose is to associate nat
 
 ```
 #output
-greet
+do something
 print('hello, world');
 ```
 
