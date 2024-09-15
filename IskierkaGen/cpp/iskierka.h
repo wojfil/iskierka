@@ -261,6 +261,31 @@ enum LineParsingMode
     ThirdLine
 };
 
+static bool directoryExists(const std::string& path)
+{
+#ifdef _WIN32
+
+    DWORD fileAttributes = GetFileAttributes(path.c_str());
+    
+    if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
+        return false;
+    }
+    
+    return (fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+
+#else
+
+    struct stat info;
+    
+    if (stat(path.c_str(), &info) != 0) {
+        return false;
+    }
+    
+    return (info.st_mode & S_IFDIR);
+    
+#endif
+}
+
 
 class IskierkaGen
 {
@@ -320,6 +345,12 @@ private:
     // read source files with Iskierka codes
     void loadData(const std::string& path)
     {
+        // check if the source directory exists
+        if (! directoryExists(path)) {
+            error(concat("Iskierka error: directory '", path, "' does no exist in this project."));
+            return;
+        }
+
         // get relative paths to all *.iski files in the source directory
         std::vector<std::string> src;
         if (! getFilesInDirectory(src, path)) {
