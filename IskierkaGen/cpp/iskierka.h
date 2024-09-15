@@ -293,7 +293,7 @@ class IskierkaGen
 public:
     IskierkaGen() = delete;
 
-    // path = ralative path to the directory with *.iski files (NO recursive traversation)
+    // path = relative path to the directory with *.iski files (NO recursive traversation)
     // flags = execution flags
     IskierkaGen(const std::string& path, const uint32_t flags) 
         : m_flags(flags), m_randomness(m_randomDevice())
@@ -301,7 +301,7 @@ public:
         loadData(path);
     };
 
-    // path = ralative path to the directory with *.iski files (NO recursive traversation)
+    // path = relative path to the directory with *.iski files (NO recursive traversation)
     IskierkaGen(const std::string& path) 
         : m_flags(ISKIERKA_FLAG_NONE), m_randomness(m_randomDevice())
     {
