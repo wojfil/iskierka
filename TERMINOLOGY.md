@@ -1,6 +1,6 @@
 # Terminology
 
-Iskierka codes often forms similar patterns that have been named.
+Iskierka codes often form similar patterns that have been named.
 
 
 ## Root
