@@ -526,7 +526,7 @@ private:
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
-            error(concat("Iskierka error: source directory '", path, "' could not be opened."));
+            error(concat("Iskierka error: not a single *.iski file has been found in directory '", path, "'."));
             return false;
         }
 
