@@ -265,7 +265,7 @@ static bool directoryExists(const std::string& path)
 {
 #ifdef _WIN32
 
-    DWORD fileAttributes = GetFileAttributes(path.c_str());
+    const DWORD fileAttributes = GetFileAttributes(path.c_str());
     
     if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
         return false;
