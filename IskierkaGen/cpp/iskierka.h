@@ -275,13 +275,14 @@ static bool directoryExists(const std::string& path)
 
 #else
 
-    struct stat info;
+    DIR* dir = opendir(path.c_str());
     
-    if (stat(path.c_str(), &info) != 0) {
-        return false;
+    if (dir) {
+        closedir(dir);
+        return true;
     }
     
-    return (info.st_mode & S_IFDIR);
+    return false;
     
 #endif
 }
