@@ -1,8 +1,7 @@
 // Created by WojFil Games 2024
 // This code is licensed under MIT license (see LICENSE.txt for details)
 
-#ifndef ISKIERKA_H_INCLUDED
-#define ISKIERKA_H_INCLUDED
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -1007,5 +1006,3 @@ private:
 };
 
 };
-
-#endif // ISKIERKA_H_INCLUDED
