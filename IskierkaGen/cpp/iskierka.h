@@ -347,7 +347,7 @@ private:
     {
         // check if the source directory exists
         if (! directoryExists(path)) {
-            error(concat("Iskierka error: directory '", path, "' does no exist in this project."));
+            error(concat("Iskierka error: directory '", path, "' does not exist in this project."));
             return;
         }
 
