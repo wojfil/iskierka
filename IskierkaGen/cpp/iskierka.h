@@ -904,6 +904,8 @@ private:
                 return;
             }
         }
+
+        value.clear();
     };
 
     void rightTrim(std::string& value) const
