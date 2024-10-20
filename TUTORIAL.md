@@ -1,6 +1,11 @@
 
 # IskierkaGen quick tutorial
 
+I assume you are using the header-only C++ version of Iskierka.
+Create an empty directory named 'data' in the same folder as your compiled program.
+Inside this 'data', make a file 'output.iski'.
+We will write code here.
+
 Iskierka code consists of *hash expressions*.
 Each of them is a series of three lines of text.
 
@@ -14,8 +19,7 @@ The first one starts with *#* and is followed by a variable name.
 The second line contains natural language text.
 The third line is a code written in some programming language.
 
-
-Every codebase needs at least one hash expression starting with variable *output*.
+Every codebase needs at least one hash expression with variable *output*. Strings are built from here.
 
 ```
 #output

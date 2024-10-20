@@ -15,7 +15,7 @@ print('hello, world');
 
 IskierkaGen establishes an infinite source of synthetic data for AI based on rules from some Iskierka codebase.
 It constructs pairs of random strings (natural language text and programming language code) that are correlated.
-See below the process of Perun2 code generation along with text in English.
+See below the animated process of Perun2 code generation along with text in English.
 
 ![Codegen example](perun2gen.gif)
 
@@ -23,7 +23,7 @@ Directory IskierkaGen contains a header-only C++ implementation of IskierkaGen. 
 
 ## How does it work?
 
-This is a context-free rewriting system similar to the Lindenmayer system (link [here](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
+This is a context-free rewriting system similar to the Lindenmayer system ([link](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
 
 There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instances get the same value. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
 
