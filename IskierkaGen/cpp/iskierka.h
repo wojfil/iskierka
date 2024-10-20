@@ -986,7 +986,7 @@ private:
                     const std::string name = line.substr(start + 1, i - start - 1);
 
                     if (name.empty()) {
-                        error(concat("variables with prefix __ are not allowed in this version of Iskierka."), filePath, lineId);
+                        error("variables with prefix __ are not allowed in this version of Iskierka.", filePath, lineId);
                         return false;
                     }
 
