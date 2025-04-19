@@ -27,10 +27,10 @@ namespace iskierka
 // extension of Iskierka code files
 static constexpr char EXTENSION[] = "iski";
 
-// this is the name of the root variable, we start evaluation from here
+// this is the name of the root Variable, we start evaluation from here
 static constexpr char ROOT[] = "output";
 
-// prefix of variables in Iskierka code
+// prefix of Variables in Iskierka code
 static constexpr char PREFIX = '_';
 
 // the default limit of function recursive calls, it prevents stack overflows
@@ -47,28 +47,28 @@ static constexpr uint32_t ISKIERKA_FLAG_SHOW_NO_ERRORS = 1;
 
 static size_t unitLen(const char value)
 {
-   return 1;
+    return 1;
 }
 
 static size_t unitLen(const char value[])
 {
-   return strlen(value);
+    return strlen(value);
 }
 
 static size_t unitLen(const std::string& value)
 {
-   return value.size();
+    return value.size();
 }
 
 static size_t charsLen()
 {
-   return 0;
+    return 0;
 }
 
 template<typename T, typename... Args>
 static size_t charsLen(const T& firstValue, Args const&... args)
 {
-   return unitLen(firstValue) + charsLen(args...);
+    return unitLen(firstValue) + charsLen(args...);
 }
 
 static void insertStr(std::string& result)
@@ -79,8 +79,8 @@ static void insertStr(std::string& result)
 template<typename T, typename... Args>
 static void insertStr(std::string& result, const T& firstValue, Args const&... args)
 {
-   result += firstValue;
-   insertStr(result, args...);
+    result += firstValue;
+    insertStr(result, args...);
 }
 
 // concatenate values into one string
@@ -88,54 +88,38 @@ static void insertStr(std::string& result, const T& firstValue, Args const&... a
 template<typename... Args>
 static std::string concat(Args const&... args)
 {
-   std::string result;
-   result.reserve(charsLen(args...));
-   insertStr(result, args...);
-   return result;
+    std::string result;
+    result.reserve(charsLen(args...));
+    insertStr(result, args...);
+    return result;
 }
 
+// here starts the real code
 
 struct Variable;
-
 
 // the smallest unit of an expression
 struct Unit
 {
 public:
-    virtual Variable* getVariablePtr() const { return nullptr; };
-    virtual std::string getString() const { return std::string(); };
-};
+    Unit(const std::string& val) 
+        : m_value(val), m_variable(nullptr) { };
 
+    Unit(Variable* var) 
+        : m_value(), m_variable(var) { };
 
-// string literal
-struct ConstUnit : Unit
-{
-public:
-    ConstUnit() = delete;
-    ConstUnit(const std::string& val) : m_value(val) { };
-
-    std::string getString() const override { return m_value; }
-
+    std::string getString() const { return m_value; }  
+    Variable* getVariablePtr() const { return m_variable; };
+    bool isConstant() const { return m_variable == nullptr; };
+    bool isVariable() const { return m_variable != nullptr; };
+    
 private:
     const std::string m_value;
+    Variable* m_variable;
 };
 
 
-// reference to some variable
-struct VariableUnit : Unit
-{
-public:
-    VariableUnit() = delete;
-    VariableUnit(Variable& var) : m_variable(var) { };
-
-    Variable* getVariablePtr() const override { return &m_variable; };
-
-private:
-    Variable& m_variable;
-};
-
-
-typedef std::vector<std::unique_ptr<Unit>> units_t;
+typedef std::vector<Unit> units_t;
 
 
 struct HashExpression
@@ -144,38 +128,28 @@ public:
     HashExpression() = delete;
 
     HashExpression(units_t& natural, units_t& programming)
+        : m_natural(natural), m_programming(programming)
     {
-        transferUniquePtrs(natural, m_natural);
-        transferUniquePtrs(programming, m_programming);
         insertUniqueIdents(m_natural);
         insertUniqueIdents(m_programming);
     };
 
-
-    units_t m_natural;
-    units_t m_programming;
+    const units_t m_natural;
+    const units_t m_programming;
     std::unordered_set<Variable*> m_uniqueIdents;
 
 private:
-    void transferUniquePtrs(units_t& source, units_t& destination)
-    {
-        for (std::unique_ptr<Unit>& s : source) {
-            destination.push_back(std::move(s));
-        }
-    };
-
     void insertUniqueIdents(const units_t& values) 
     {
-        for (const std::unique_ptr<Unit>& v : values) {
-            if (v->getVariablePtr() != nullptr) {
-                m_uniqueIdents.emplace(v->getVariablePtr());
+        for (const Unit& v : values) {
+            if (v.isVariable()) {
+                m_uniqueIdents.emplace(v.getVariablePtr());
             }
         }
     };
 };
 
 
-// variable is a collection of all hash expressions named the same
 struct Variable
 {
 public:
@@ -203,7 +177,7 @@ public:
     };
 
     // insert new values
-    // but only if this variable is not sealed
+    // but only if this Variable is not sealed
     bool insert(units_t& natural, units_t& programming, const int64_t weight)
     {
         if (m_sealed) {
@@ -217,7 +191,7 @@ public:
         return true;
     };
 
-    // variable is sealed only once
+    // Variable is sealed only once
     // we prepare the probability distribution, so the lists no longer can be extended
     void seal() 
     {
@@ -226,23 +200,9 @@ public:
             return;
         }
 
-        // if variable only contains hash expressions with weight == 0
-        // prepare a discrete uniform distribution
-        if (m_totalWeight == 0) {
-            m_totalWeight = static_cast<int64_t>(m_units.size());
-
-            for (size_t i = 0; i < m_units.size(); i++) {
-                m_weights[i] = static_cast<int64_t>(i + 1);
-            }
-        }
-
         m_distribution = std::make_unique<std::uniform_int_distribution<int64_t>>(0, m_totalWeight - 1);
     };
 
-    bool isEmpty() const 
-    {
-        return m_units.empty();
-    };
 
 private:
     std::vector<HashExpression> m_units;
@@ -261,39 +221,13 @@ enum LineParsingMode
     ThirdLine
 };
 
-static bool directoryExists(const std::string& path)
-{
-#ifdef _WIN32
-
-    const DWORD fileAttributes = GetFileAttributes(path.c_str());
-    
-    if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
-        return false;
-    }
-    
-    return (fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-
-#else
-
-    DIR* dir = opendir(path.c_str());
-    
-    if (dir) {
-        closedir(dir);
-        return true;
-    }
-    
-    return false;
-    
-#endif
-}
-
 
 class IskierkaGen
 {
 public:
     IskierkaGen() = delete;
 
-    // path = relative path to the directory with *.iski files (NO recursive traversation)
+    // path = the path to the directory with *.iski files
     // flags = execution flags
     IskierkaGen(const std::string& path, const uint32_t flags) 
         : m_flags(flags), m_randomness(m_randomDevice())
@@ -301,7 +235,7 @@ public:
         loadData(path);
     };
 
-    // path = relative path to the directory with *.iski files (NO recursive traversation)
+    // path = the path to the directory with *.iski files
     IskierkaGen(const std::string& path) 
         : m_flags(ISKIERKA_FLAG_NONE), m_randomness(m_randomDevice())
     {
@@ -346,21 +280,14 @@ private:
     // read source files with Iskierka codes
     void loadData(const std::string& path)
     {
-        // check if the source directory exists
-        if (! directoryExists(path)) {
-            error(concat("Iskierka error: directory '", path, "' does not exist in this project."));
-            return;
-        }
-
         // get relative paths to all *.iski files in the source directory
         std::vector<std::string> src;
         if (! getFilesInDirectory(src, path)) {
             return;
         }
 
-        // directory exists, but there is no file with extension *.iski
         if (src.empty()) {
-            error(concat("Iskierka error: not a single *.iski file has been found in directory '", path, "'."));
+            error(concat("Iskierka error: not a single *.iski file has been found in directory '", ROOT, "'."));
             return;
         }
 
@@ -384,22 +311,12 @@ private:
             }
         }
 
-        // check a very rare error if files were mutated during parsing
-        for (auto& v : m_variables) {
-            if (v.second.isEmpty()) {
-                error(concat("Iskierka error: variable '", v.first, "' does not have any hash expression. ",
-                    "The source code file was probably mutated by an external program during parsing. Try to run again."
-                ));
-                return;
-            }
-        }
-
-        // seal variables => prepare probability distributions for them
-        for (auto& v : m_variables) {
-            v.second.seal();
+        // seal Variables => prepare probability distributions for them
+        for (auto& id : m_variables) {
+            id.second.seal();
         }
        
-        // if everything is fine, set value m_isParsed and load m_rootPtr for future fast access
+        // if everything is fine, set flag m_isParsed and load m_rootPtr for future fast access
         m_rootPtr = &m_variables.find(ROOT)->second;
         m_isParsed = true;
     };
@@ -434,22 +351,22 @@ private:
         bool naturalOmitSpace = false;
         bool programmingOmitSpace = false;
 
-        for (const std::unique_ptr<Unit>& he : expr.m_natural) {
-            if (he->getVariablePtr() == nullptr) {
+        for (const Unit& unit : expr.m_natural) {
+            if (unit.isConstant()) {
                 if (naturalOmitSpace) {
                     naturalOmitSpace = false;
 
-                    natural += std::isspace(he->getString()[0])
-                        ? he->getString().substr(1)
-                        : he->getString();
+                    natural += std::isspace(unit.getString()[0])
+                        ? unit.getString().substr(1)
+                        : unit.getString();
                 }
                 else {
-                    natural += he->getString();
+                    natural += unit.getString();
                 }
             }
             else {
                 naturalOmitSpace = false;
-                const std::string& add = naturals.find(he->getVariablePtr())->second;
+                const std::string& add = naturals.find(unit.getVariablePtr())->second;
                 if (add.empty()) {
                     if (! natural.empty() && std::isspace(natural[natural.size() - 1])) {
                         natural.resize(natural.size() - 1);
@@ -464,22 +381,22 @@ private:
             }
         }
 
-        for (const std::unique_ptr<Unit>& he : expr.m_programming) {
-            if (he->getVariablePtr() == nullptr) {
+        for (const Unit& unit : expr.m_programming) {
+            if (unit.isConstant()) {
                 if (programmingOmitSpace) {
                     programmingOmitSpace = false;
 
-                    programming += std::isspace(he->getString()[0])
-                        ? he->getString().substr(1)
-                        : he->getString();
+                    programming += std::isspace(unit.getString()[0])
+                        ? unit.getString().substr(1)
+                        : unit.getString();
                 }
                 else {
-                    programming += he->getString();
+                    programming += unit.getString();
                 }
             }
             else {
                 programmingOmitSpace = false;
-                const std::string& add = programmings.find(he->getVariablePtr())->second;
+                const std::string& add = programmings.find(unit.getVariablePtr())->second;
                 if (add.empty()) {
                     if (! programming.empty() && std::isspace(programming[programming.size() - 1])) {
                         programming.resize(programming.size() - 1);
@@ -527,7 +444,7 @@ private:
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
-            error(concat("Iskierka error: not a single *.iski file has been found in directory '", path, "'."));
+            error(concat("Iskierka error: source directory '", path, "' could not be opened."));
             return false;
         }
 
@@ -592,7 +509,7 @@ private:
 
 
 // the first pass scans all source files
-// and prepares a map of all used variables
+// and prepares a map of all used Variables
 // this is the only thing we do here (besides some error checks)
     bool firstPass(const std::string& filePath)
     {
@@ -646,7 +563,7 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("character '", line[i], "' is not allowed in a variable name."), filePath, lineId);
+                            error(concat("character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                             file.close();
                             return false;
                         }
@@ -935,8 +852,6 @@ private:
                 return;
             }
         }
-
-        value.clear();
     };
 
     void rightTrim(std::string& value) const
@@ -978,7 +893,7 @@ private:
                     const std::string literal = line.substr(start, i - start);
                     start = i;
                     nowStringLiteral = false;
-                    result.emplace_back(std::make_unique<ConstUnit>(literal));
+                    result.emplace_back(literal);
                 }
             }
             else {
@@ -986,7 +901,7 @@ private:
                     const std::string name = line.substr(start + 1, i - start - 1);
 
                     if (name.empty()) {
-                        error("variables with prefix __ are not allowed in this version of Iskierka.", filePath, lineId);
+                        error(concat("variables with prefix __ are not allowed in this version of Iskierka."), filePath, lineId);
                         return false;
                     }
 
@@ -999,14 +914,14 @@ private:
 
                     start = i;
                     nowStringLiteral = line[i] != '_';
-                    result.emplace_back(std::make_unique<VariableUnit>(var->second));
+                    result.emplace_back(&var->second);
                 }
             }
         }
 
         if (nowStringLiteral) {
             const std::string literal = line.substr(start);
-            result.emplace_back(std::make_unique<ConstUnit>(literal));
+            result.emplace_back(literal);
         }
         else {
             const std::string name = line.substr(start + 1);
@@ -1016,7 +931,7 @@ private:
                 return false;
             }
 
-            result.emplace_back(std::make_unique<VariableUnit>(var->second));
+            result.emplace_back(&var->second);
         }
 
         return true;
@@ -1029,10 +944,10 @@ private:
     std::random_device m_randomDevice;
     std::mt19937_64 m_randomness;
     
-    // this mechanism protects us from runtime stack overflows
+    // this is a runtime stack overflow protection mechanism
     // if too many functions are called recursively
     // the next() function is forced to fail instead of causing program crash
-    // you can turn this off and go YOLO - set m_levelLimit to some arbitrary huge value
+    // to turn it off, set m_levelLimit to some arbitrary huge value
     int64_t m_levelLimit = DEFAULT_RECURSION_LEVEL_LIMIT;
     int64_t m_level = 0;
 };
