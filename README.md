@@ -67,6 +67,11 @@ int main(void)
             std::cout << programming << std::endl;
             std::cout << std::endl;
         }
+        else
+        {
+            std::cout << "IskierkaGen error: out of memory" << std::endl;
+            std::cout << std::endl;
+        }
     }
 
     return 0;
