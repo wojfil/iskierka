@@ -119,27 +119,24 @@ private:
 };
 
 
-typedef std::vector<Unit> units_t;
-
-
 struct HashExpression
 {
 public:
     HashExpression() = delete;
 
-    HashExpression(units_t& natural, units_t& programming)
+    HashExpression(std::vector<Unit>& natural, std::vector<Unit>& programming)
         : m_natural(natural), m_programming(programming)
     {
         insertUniqueIdents(m_natural);
         insertUniqueIdents(m_programming);
     };
 
-    const units_t m_natural;
-    const units_t m_programming;
+    const std::vector<Unit> m_natural;
+    const std::vector<Unit> m_programming;
     std::unordered_set<Variable*> m_uniqueIdents;
 
 private:
-    void insertUniqueIdents(const units_t& values) 
+    void insertUniqueIdents(const std::vector<Unit>& values) 
     {
         for (const Unit& v : values) {
             if (v.isVariable()) {
@@ -178,7 +175,7 @@ public:
 
     // insert new values
     // but only if this Variable is not sealed
-    bool insert(units_t& natural, units_t& programming, const int64_t weight)
+    bool insert(std::vector<Unit>& natural, std::vector<Unit>& programming, const int64_t weight)
     {
         if (m_sealed) {
             return false;
@@ -635,8 +632,8 @@ private:
         std::string variableName;
         int64_t weight = 1;
 
-        units_t natural;
-        units_t programming;
+        std::vector<Unit> natural;
+        std::vector<Unit> programming;
 
         while (std::getline(file, line)) {
             rightTrim(line);
@@ -872,7 +869,7 @@ private:
         value.clear();
     };
 
-    bool parseLine(units_t& result, const std::string& line, const std::string& filePath, const int64_t lineId)
+    bool parseLine(std::vector<Unit>& result, const std::string& line, const std::string& filePath, const int64_t lineId)
     {
         result.clear();
 
