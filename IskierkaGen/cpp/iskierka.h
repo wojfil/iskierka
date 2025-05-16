@@ -124,7 +124,7 @@ struct HashExpression
 public:
     HashExpression() = delete;
 
-    HashExpression(std::vector<Unit>& natural, std::vector<Unit>& programming)
+    HashExpression(const std::vector<Unit>& natural, const std::vector<Unit>& programming)
         : m_natural(natural), m_programming(programming)
     {
         insertUniqueIdents(m_natural);
