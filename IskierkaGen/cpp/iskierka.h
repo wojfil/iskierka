@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <random>
+#include <limits>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -169,8 +170,7 @@ public:
 
     bool weightIntegerOverflow(const int64_t addition) const
     {
-        const int64_t result = m_totalWeight + addition;
-        return result < addition || result < m_totalWeight;
+        return addition > std::numeric_limits<int64_t>::max() - m_totalWeight;
     };
 
     // insert new values
