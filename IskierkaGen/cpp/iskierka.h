@@ -297,7 +297,7 @@ private:
         }
 
         if (src.empty()) {
-            error(concat("Iskierka error: not a single *.iski file has been found in directory '", ROOT, "'."));
+            error(concat("Iskierka error: not a single *.iski file has been found in the directory '", ROOT, "'."));
             return;
         }
 
@@ -421,7 +421,7 @@ private:
             return;
         }
 
-        std::cout << concat("Iskierka error in file '", filePath, "' at line ", std::to_string(line), ": ", msg) << std::endl;
+        std::cout << concat("Iskierka error in the file '", filePath, "' at line ", std::to_string(line), ": ", msg) << std::endl;
     };
 
     bool getFilesInDirectory(std::vector<std::string>& result, const std::string& path)
@@ -436,7 +436,7 @@ private:
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
-            error(concat("Iskierka error: source directory '", path, "' could not be opened."));
+            error(concat("Iskierka error: the source directory '", path, "' could not be opened."));
             return false;
         }
 
@@ -457,7 +457,7 @@ private:
         dir = opendir(path.c_str());
 
         if (dir == nullptr) {
-            error(concat("Iskierka error: source directory '", path, "' could not be opened."));
+            error(concat("Iskierka error: the source directory '", path, "' could not be opened."));
             return false;
         }
 
@@ -508,7 +508,7 @@ private:
         std::ifstream file(filePath);
 
         if (!file.is_open()) {
-            error(concat("Iskierka error: unable to open file '", filePath, "'."));
+            error(concat("Iskierka error: unable to open the file '", filePath, "'."));
             return false;
         }
 
@@ -555,7 +555,7 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
+                            error(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                             file.close();
                             return false;
                         }
@@ -567,7 +567,7 @@ private:
                 }
                 case LineParsingMode::SecondLine: {
                     if (line.empty()) {
-                        error("second line of this hash expression is missing.", filePath, lineId);
+                        error("the second line of this hash expression is missing.", filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -577,7 +577,7 @@ private:
                 }
                 case LineParsingMode::ThirdLine: {
                     if (line.empty()) {
-                        error("third line of this hash expression is missing.", filePath, lineId);
+                        error("the third line of this hash expression is missing.", filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -590,12 +590,12 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("second line of this hash expression is missing.", filePath, lineId);
+                error("the second line of this hash expression is missing.", filePath, lineId);
                 file.close();
                 return false;
             }
             case LineParsingMode::ThirdLine: {
-                error("third line of this hash expression is missing.", filePath, lineId);
+                error("the third line of this hash expression is missing.", filePath, lineId);
                 file.close();
                 return false;
             }
@@ -616,7 +616,7 @@ private:
         std::ifstream file(filePath);
 
         if (!file.is_open()) {
-            error(concat("Iskierka error: unable to open file '", filePath, "'."));
+            error(concat("Iskierka error: unable to open the file '", filePath, "'."));
             return false;
         }
 
@@ -669,7 +669,7 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
+                            error(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                             file.close(); 
                             return false;
                         }
@@ -712,7 +712,7 @@ private:
                     }
 
                     if (i == line.size()) {
-                        error(concat("property '", property, "' is not followed by a positive integer argument."), 
+                        error(concat("the property '", property, "' is not followed by a positive integer argument."), 
                             filePath, lineId);
 
                         file.close(); 
@@ -735,7 +735,7 @@ private:
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
-                        error(concat("value '", textWithNumber, "' is not a positive integer."), filePath, lineId);
+                        error(concat("the value '", textWithNumber, "' is not a positive integer."), filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -744,7 +744,7 @@ private:
                         weight = std::stoll(textWithNumber);
                     } 
                     catch (const std::out_of_range& e) {
-                        error(concat("number '", property, "' is too big. We are restricted by the range of int64."), 
+                        error(concat("the number '", property, "' is too big. We are restricted by the range of int64."), 
                             filePath, lineId);
 
                         file.close(); 
@@ -757,7 +757,7 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("second line of this hash expression is missing.", filePath, lineId);
+                        error("the second line of this hash expression is missing.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -777,7 +777,7 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("third line of this hash expression is missing.", filePath, lineId);
+                        error("the third line of this hash expression is missing.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -793,13 +793,13 @@ private:
                     Variable& id = m_variables.find(variableName)->second;
 
                     if (id.weightIntegerOverflow(weight)) {
-                        error("the weight of this hash expression is too big. Integer overflow happened.", filePath, lineId);
+                        error("the weight of this hash expression is too big. An integer overflow happened.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
 
                     if (! id.insert(natural, programming, weight)) {
-                        error("we cannot add more hash expressions. The variable is sealed and finished.", filePath, lineId);
+                        error("we cannot add more hash expressions. This variable is sealed and finished.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -812,12 +812,12 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("second line of this hash expression is missing.", filePath, lineId);
+                error("the second line of this hash expression is missing.", filePath, lineId);
                 file.close(); 
                 return false;
             }
             case LineParsingMode::ThirdLine: {
-                error("third line of this hash expression is missing.", filePath, lineId);
+                error("the third line of this hash expression is missing.", filePath, lineId);
                 file.close(); 
                 return false;
             }
@@ -944,7 +944,7 @@ private:
                 if (temp[temp.size() - 1] == PREFIX) {
                     if (variableAllowedStartChar(ch)) {
                         if (temp.size() > 2) {
-                            error(concat("there are too many underscores in a variable reference. Only one or two are allowed."), 
+                            error(concat("there are too many underscores in a reference to a variable. Only one or two are allowed."), 
                                 filePath, lineId);
                             return false;
                         }
