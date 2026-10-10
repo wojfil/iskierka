@@ -317,9 +317,11 @@ private:
             return;
         }
 
+        std::unordered_map<std::string, std::string> variableFiles;
+
         // then, do the superficial 'first pass'
         for (const std::string& file : src) {
-            if (! firstPass(file)) {
+            if (! firstPass(file, variableFiles)) {
                 return;
             }
         }
@@ -514,7 +516,7 @@ private:
 // the first pass scans all source files
 // and prepares a map of all used Variables
 // this is the only thing we do here (besides some error checks)
-    bool firstPass(const std::string& filePath)
+    bool firstPass(const std::string& filePath, std::unordered_map<std::string, std::string>& variableFiles)
     {
         std::ifstream file(filePath);
 
@@ -573,6 +575,22 @@ private:
                     }
 
                     const std::string variable = line.substr(start, i - start);
+                    const auto find = variableFiles.find(variable);
+
+                    if (find == variableFiles.end()) {
+                        variableFiles.emplace(variable, filePath);
+                    }
+                    else {
+                        const std::string& originPath = find->second;
+                        if (originPath != filePath) {
+                            error(concat("the variable '", variable, "' has already been defined in the file '", 
+                                originPath,  "'. For security reasons, all rules of '", variable,
+                                "' must appear inside one file."), filePath, lineId);
+                            file.close();
+                            return false;
+                        }
+                    }
+
                     m_variables.emplace(variable, Variable());
                     break;
                 }
