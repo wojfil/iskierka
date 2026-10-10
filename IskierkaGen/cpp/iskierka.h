@@ -100,6 +100,8 @@ static bool isSpace(const char ch)
     return std::isspace(ch);
 }
 
+static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
+
 // here starts the real code
 
 struct Variable;
@@ -181,7 +183,7 @@ public:
 
     bool weightIntegerOverflow(const int64_t addition) const
     {
-        return addition > std::numeric_limits<int64_t>::max() - m_totalWeight;
+        return addition > MAX_INT64 - m_totalWeight;
     };
 
     // insert new values
