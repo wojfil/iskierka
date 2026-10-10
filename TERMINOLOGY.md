@@ -37,8 +37,8 @@ This variable can be skipped entirely or it inserts two values.
 
 ```
 #warnings weight 5
-##empty
-##empty
+__nothing
+__nothing
 
 #warnings weight 3
 with warnings
@@ -51,12 +51,12 @@ This variable can be skipped entirely and it never affects the programming code 
 
 ```
 #optionaryOf weight 8
-##empty
-##empty
+__nothing
+__nothing
 
 #optionaryOf weight 2
 of
-##empty
+__nothing
 ```
 
 ## Fractal
@@ -82,15 +82,15 @@ A set of natural language texts that share similar meaning.
 ```
 #selectionVerb
 select
-##empty
+__nothing
 
 #selectionVerb
 give
-##empty
+__nothing
 
 #selectionVerb
 show
-##empty
+__nothing
 ```
 
 ## Fork
@@ -192,15 +192,15 @@ optimized
 
 
 #f1 weight 3
-##empty
-##empty
+__nothing
+__nothing
 
 #f2 weight 2
-##empty
-##empty
+__nothing
+__nothing
 
 #f3 weight 3
-##empty
-##empty
+__nothing
+__nothing
 ```
 

@@ -101,17 +101,17 @@ It will be picked 60% of the times. The second is picked 30% of the times and th
 The 25% probability is used for every rule of *ticketsNumber*.
 
 
-Special value *##empty* represents an empty string. 
+The special value *__nothing* represents an empty string. 
 It can be used to define some optionary natural language insertions that do not affect the programming language output code.
 
 ```
 #optionaryPlease weight 2
 please
-##empty
+__nothing
 
 #optionaryPlease weight 8
-##empty
-##empty
+__nothing
+__nothing
 ```
 
 This is the entire language.

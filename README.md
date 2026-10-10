@@ -73,7 +73,7 @@ int main(void)
         }
         else
         {
-            std::cout << "IskierkaGen error: out of memory" << std::endl;
+            std::cout << "IskierkaGen error: failed to produce a pair" << std::endl;
             std::cout << std::endl;
         }
     }
