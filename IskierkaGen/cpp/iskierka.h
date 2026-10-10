@@ -95,6 +95,11 @@ static std::string concat(Args const&... args)
     return result;
 }
 
+static bool isSpace(const char ch)
+{
+    return std::isspace(ch);
+}
+
 // here starts the real code
 
 struct Variable;
@@ -103,19 +108,25 @@ struct Variable;
 struct Unit
 {
 public:
-    Unit(const std::string& val) 
-        : m_value(val), m_variable(nullptr) { };
+    Unit(const std::string& value) 
+        : m_value(value), m_variable(nullptr) { };
 
-    Unit(Variable* var) 
-        : m_value(), m_variable(var) { };
+    Unit(Variable* variable) 
+        : m_value(), m_variable(variable) { };
 
     std::string getString() const { return m_value; }  
+    std::string getSpaces() const { return m_followingSpaces; }  
+    void appendSpace(const char ch) { m_followingSpaces += ch; }  
     Variable* getVariablePtr() const { return m_variable; };
-    bool isConstant() const { return m_variable == nullptr; };
+    bool isConstant() const { return ! m_value.empty() && m_variable == nullptr; };
     bool isVariable() const { return m_variable != nullptr; };
+    bool isNothing() const { return m_value.empty() && m_variable == nullptr; };
+    bool hasSpaces() const { return ! m_followingSpaces.empty(); };
+    void removeSpaces() { m_followingSpaces.clear(); };
     
 private:
-    const std::string m_value;
+    std::string m_value;
+    std::string m_followingSpaces;
     Variable* m_variable;
 };
 
@@ -345,65 +356,47 @@ private:
             programmings.emplace(var, p);
         }
 
-        bool naturalOmitSpace = false;
-        bool programmingOmitSpace = false;
-
         for (const Unit& unit : expr.m_natural) {
             if (unit.isConstant()) {
-                if (naturalOmitSpace) {
-                    naturalOmitSpace = false;
+                natural += unit.getString();
 
-                    natural += std::isspace(unit.getString()[0])
-                        ? unit.getString().substr(1)
-                        : unit.getString();
+                if (unit.hasSpaces()) {
+                    natural += unit.getSpaces();
                 }
-                else {
-                    natural += unit.getString();
-                }
+
+                continue;
             }
-            else {
-                naturalOmitSpace = false;
-                const std::string& add = naturals.find(unit.getVariablePtr())->second;
-                if (add.empty()) {
-                    if (! natural.empty() && std::isspace(natural[natural.size() - 1])) {
-                        natural.resize(natural.size() - 1);
-                    }
-                    else {
-                        naturalOmitSpace = true;
-                    }
-                }
-                else {
-                    natural += add;
+
+            const std::string& add = naturals.find(unit.getVariablePtr())->second;
+
+            if (! add.empty()) {
+                natural += add;
+
+                if (unit.hasSpaces()) {
+                    natural += unit.getSpaces();
                 }
             }
         }
 
         for (const Unit& unit : expr.m_programming) {
             if (unit.isConstant()) {
-                if (programmingOmitSpace) {
-                    programmingOmitSpace = false;
+                programming += unit.getString();
 
-                    programming += std::isspace(unit.getString()[0])
-                        ? unit.getString().substr(1)
-                        : unit.getString();
+                if (unit.hasSpaces()) {
+                    programming += unit.getSpaces();
                 }
-                else {
-                    programming += unit.getString();
-                }
+
+                continue;
             }
             else {
-                programmingOmitSpace = false;
                 const std::string& add = programmings.find(unit.getVariablePtr())->second;
-                if (add.empty()) {
-                    if (! programming.empty() && std::isspace(programming[programming.size() - 1])) {
-                        programming.resize(programming.size() - 1);
-                    }
-                    else {
-                        programmingOmitSpace = true;
-                    }
-                }
-                else {
+
+                if (! add.empty()) {
                     programming += add;
+
+                    if (unit.hasSpaces()) {
+                        programming += unit.getSpaces();
+                    }
                 }
             }
         }
@@ -522,12 +515,12 @@ private:
         int64_t lineId = 0;
 
         while (std::getline(file, line)) {
-            rightTrim(line);
+            trim(line);
             lineId++;
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == "##empty") {
+                    if (line.empty() || line[0] != '#' || line == "__nothing") {
                         break;
                     }
 
@@ -636,13 +629,12 @@ private:
         std::vector<Unit> programming;
 
         while (std::getline(file, line)) {
-            rightTrim(line);
-
+            trim(line);
             lineId++;
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == "##empty") {
+                    if (line.empty() || line[0] != '#' || line == "__nothing") {
                         break;
                     }
 
@@ -760,8 +752,7 @@ private:
                     break;
                 }
                 case LineParsingMode::SecondLine: {
-                    const bool isEmptyLineIdentifier = line == "##empty";
-                    leftTrim(line);
+                    const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
                         error("second line of this hash expression is missing.", filePath, lineId);
@@ -781,8 +772,7 @@ private:
                     break;
                 }
                 case LineParsingMode::ThirdLine: {
-                    const bool isEmptyLineIdentifier = line == "##empty";
-                    leftTrim(line);
+                    const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
                         error("third line of this hash expression is missing.", filePath, lineId);
@@ -838,6 +828,12 @@ private:
         return true;
     };
 
+    void trim(std::string& value) const
+    {
+        leftTrim(value);
+        rightTrim(value);
+    }
+
     void leftTrim(std::string& value) const
     {
         for (size_t i = 0; i < value.size(); i++) {
@@ -869,66 +865,148 @@ private:
         value.clear();
     };
 
-    bool parseLine(std::vector<Unit>& result, const std::string& line, const std::string& filePath, const int64_t lineId)
+    bool hasOnlyPrefixChars(const std::string& value) const
     {
-        result.clear();
+        for (const char ch : value) {
+            if (ch != PREFIX) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-        if (line.size() >= 2 && line[0] == '#' && line[1] == '#') {
-            error(concat("the double hash expression '", line, "' is not recognized."), filePath, lineId);
+    bool insertVariableUnit(std::vector<Unit>& result, const std::string& temp, 
+        const std::string& filePath, const int64_t lineId)
+    {
+        if (hasOnlyPrefixChars(temp)) {
+            result.emplace_back(temp);
+            return true;
+        }
+
+        if (temp[1] == PREFIX) {
+            if (temp == "__nothing") {
+                result.emplace_back(nullptr);
+                return true;
+            }
+
+            error(concat("in this version of Iskierka, '__nothing' is the only allowed built-in variable."), 
+                filePath, lineId);
             return false;
         }
 
-        bool nowStringLiteral = true;
-        size_t start = 0;
+        const std::string name = temp.substr(1);
+        auto var = m_variables.find(name);
+
+        if (var == m_variables.end()) {
+            error(concat("the variable '", name, "' has not been defined."), filePath, lineId);
+            return false;
+        }
+
+        result.emplace_back(&var->second);
+        return true;
+    }
+
+    bool parseLine(std::vector<Unit>& result, const std::string& line, const std::string& filePath, const int64_t lineId)
+    {
+        result.clear();
+        std::string temp;
 
         for (size_t i = 0; i < line.size(); i++) {
-            if (nowStringLiteral) {
-                if (line[i] == PREFIX 
-                    && !(i == (line.size() - 1) || std::isspace(line[i + 1]))
-                    && (i == 0 || !isLetter(line[i - 1])))
-                {
-                    const std::string literal = line.substr(start, i - start);
-                    start = i;
-                    nowStringLiteral = false;
-                    result.emplace_back(literal);
+            const char ch = line[i];
+
+            if (! temp.empty() && temp[0] == PREFIX) {
+                if (isSpace(ch)) {
+                    if (! insertVariableUnit(result, temp, filePath, lineId)) {
+                        return false;
+                    }
+
+                    result[result.size() - 1].appendSpace(ch);
+                    temp.clear();
+                    continue;
+                }
+
+                if (ch == PREFIX) {
+                    if (temp[temp.size() - 1] == PREFIX) {
+                        temp += PREFIX;
+                        continue;
+                    }
+
+                    if (! insertVariableUnit(result, temp, filePath, lineId)) {
+                        return false;
+                    }
+
+                    temp = ch;
+                    continue;
+                }
+
+                if (temp[temp.size() - 1] == PREFIX) {
+                    if (variableAllowedStartChar(ch)) {
+                        if (temp.size() > 2) {
+                            error(concat("there are too many underscores in a variable reference. Only one or two are allowed."), 
+                                filePath, lineId);
+                            return false;
+                        }
+
+                        temp += ch;
+                        continue;
+                    }
+
+                    result.emplace_back(temp);
+                    temp = ch;
+                    continue;
+                }
+
+                if (variableAllowedChar(ch)) {
+                    temp += ch;
+                    continue;
+                }
+
+                if (! insertVariableUnit(result, temp, filePath, lineId)) {
+                    return false;
+                }
+
+                temp = ch;
+                continue;
+            }
+            
+            if (ch == PREFIX) {
+                if (! temp.empty()) {
+                    result.emplace_back(temp);
+                }
+
+                temp = ch;
+                continue;
+            }
+            
+            temp += ch;
+        }
+
+        if (! temp.empty()) {
+            if (temp[0] == PREFIX) {
+                if (! insertVariableUnit(result, temp, filePath, lineId)) {
+                    return false;
                 }
             }
             else {
-                if (! variableAllowedChar(line[i])) {
-                    const std::string name = line.substr(start + 1, i - start - 1);
-
-                    if (name.empty()) {
-                        error(concat("variables with prefix __ are not allowed in this version of Iskierka."), filePath, lineId);
-                        return false;
-                    }
-
-                    auto var = m_variables.find(name);
-
-                    if (var == m_variables.end()) {
-                        error(concat("variable '", name, "' has not been defined."), filePath, lineId);
-                        return false;
-                    }
-
-                    start = i;
-                    nowStringLiteral = line[i] != '_';
-                    result.emplace_back(&var->second);
-                }
+                result.emplace_back(temp);
             }
         }
 
-        if (nowStringLiteral) {
-            const std::string literal = line.substr(start);
-            result.emplace_back(literal);
+        if (result.empty()) {
+            return true;
         }
-        else {
-            const std::string name = line.substr(start + 1);
-            auto var = m_variables.find(name);
-            if (var == m_variables.end()) {
-                error(concat("variable '", name, "' has not been defined."), filePath, lineId);
-                return false;
-            }
 
-            result.emplace_back(&var->second);
+        for (size_t i = 0; i < result.size(); i++) {
+            const Unit& unit = result[i];
+
+            if (unit.isNothing()) {
+                result.erase(result.begin() + i);
+                i--;
+            }
+        }
+
+        if (! result.empty()) {
+            result[result.size() - 1].removeSpaces();
         }
 
         return true;
