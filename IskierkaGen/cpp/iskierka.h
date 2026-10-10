@@ -550,7 +550,7 @@ private:
 
                     size_t i = start;
                     for (; i < line.size(); i++) {
-                        if (std::isspace(line[i])) {
+                        if (isSpace(line[i])) {
                             break;
                         }
 
@@ -664,7 +664,7 @@ private:
 
                     size_t i = start;
                     for (; i < line.size(); i++) {
-                        if (std::isspace(line[i])) {
+                        if (isSpace(line[i])) {
                             break;
                         }
 
@@ -683,7 +683,7 @@ private:
                     }
 
                     for (; i < line.size(); i++) {
-                        if (! std::isspace(line[i])) {
+                        if (! isSpace(line[i])) {
                             break;
                         }
                     }
@@ -691,7 +691,7 @@ private:
                     const size_t memberStart = i;
 
                     for (; i < line.size(); i++) {
-                        if (std::isspace(line[i])) {
+                        if (isSpace(line[i])) {
                             break;
                         }
                     }
@@ -706,7 +706,7 @@ private:
                     }
 
                     for (; i < line.size(); i++) {
-                        if (! std::isspace(line[i])) {
+                        if (! isSpace(line[i])) {
                             break;
                         }
                     }
@@ -723,7 +723,7 @@ private:
                     bool wrongNumber = false;
 
                     for (; i < line.size(); i++) {
-                        if (std::isspace(line[i])) {
+                        if (isSpace(line[i])) {
                             break;
                         }
                         else if (! std::isdigit(line[i])) {
@@ -839,7 +839,7 @@ private:
     void leftTrim(std::string& value) const
     {
         for (size_t i = 0; i < value.size(); i++) {
-            if (! std::isspace(value[i])) {
+            if (! isSpace(value[i])) {
                 if (i != 0) {
                     value = value.substr(i);
                 }
@@ -854,7 +854,7 @@ private:
         const int64_t end = static_cast<int64_t>(value.size()) - 1;
 
         for (int64_t i = end; i >= 0; --i) {
-            if (! std::isspace(value[i])) {
+            if (! isSpace(value[i])) {
                 if (i == end) {
                     return;
                 }
