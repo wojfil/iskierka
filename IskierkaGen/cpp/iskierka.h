@@ -851,9 +851,9 @@ private:
 
     void rightTrim(std::string& value) const
     {
-        const int end = static_cast<int>(value.size()) - 1;
+        const int64_t end = static_cast<int64_t>(value.size()) - 1;
 
-        for (int i = end; i >= 0; --i) {
+        for (int64_t i = end; i >= 0; --i) {
             if (! std::isspace(value[i])) {
                 if (i == end) {
                     return;
