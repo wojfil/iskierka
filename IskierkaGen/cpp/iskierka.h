@@ -106,7 +106,7 @@ static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 
 struct Variable;
 
-// the smallest unit of an expression
+// the smallest unit of a rule
 struct Unit
 {
 public:
@@ -133,12 +133,12 @@ private:
 };
 
 
-struct HashExpression
+struct Rule
 {
 public:
-    HashExpression() = delete;
+    Rule() = delete;
 
-    HashExpression(const std::vector<Unit>& natural, const std::vector<Unit>& programming)
+    Rule(const std::vector<Unit>& natural, const std::vector<Unit>& programming)
         : m_natural(natural), m_programming(programming)
     {
         insertUniqueIdents(m_natural);
@@ -164,7 +164,7 @@ private:
 struct Variable
 {
 public:
-    const HashExpression& getRandomHashExpression(std::mt19937_64& randomness)
+    const Rule& getRandomRule(std::mt19937_64& randomness)
     {
         if (m_units.size() == 1) {
             return m_units[0];
@@ -215,7 +215,7 @@ public:
 
 
 private:
-    std::vector<HashExpression> m_units;
+    std::vector<Rule> m_units;
     int64_t m_totalWeight = 0;
     std::vector<int64_t> m_weights;
     bool m_sealed = false;
@@ -314,7 +314,7 @@ private:
             return;
         }
 
-        // build all expressions
+        // build all the rules
         for (const std::string& file : src) {
             if (! secondPass(file)) {
                 return;
@@ -333,11 +333,11 @@ private:
 
     bool evaluateVariable(Variable& var, std::string& natural, std::string& programming)
     {
-        const HashExpression& expr = var.getRandomHashExpression(m_randomness);
-        return evaluateHashExpression(expr, natural, programming);
+        const Rule& expr = var.getRandomRule(m_randomness);
+        return evaluateRule(expr, natural, programming);
     };
 
-    bool evaluateHashExpression(const HashExpression& expr, std::string& natural, std::string& programming)
+    bool evaluateRule(const Rule& expr, std::string& natural, std::string& programming)
     {
         std::unordered_map<Variable*, std::string> naturals;
         std::unordered_map<Variable*, std::string> programmings;
@@ -533,7 +533,7 @@ private:
                     }
 
                     if (line[1] == '#') {
-                        error(concat("the double hash expression '", line, "' is not recognized."), filePath, lineId);
+                        error(concat("this version of Iskierka does not support special rules starting with ##."), filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -567,7 +567,7 @@ private:
                 }
                 case LineParsingMode::SecondLine: {
                     if (line.empty()) {
-                        error("the second line of this hash expression is missing.", filePath, lineId);
+                        error("the second line of this rule is missing.", filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -577,7 +577,7 @@ private:
                 }
                 case LineParsingMode::ThirdLine: {
                     if (line.empty()) {
-                        error("the third line of this hash expression is missing.", filePath, lineId);
+                        error("the third line of this rule is missing.", filePath, lineId);
                         file.close();
                         return false;
                     }
@@ -590,12 +590,12 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("the second line of this hash expression is missing.", filePath, lineId);
+                error("the second line of this rule is missing.", filePath, lineId);
                 file.close();
                 return false;
             }
             case LineParsingMode::ThirdLine: {
-                error("the third line of this hash expression is missing.", filePath, lineId);
+                error("the third line of this rule is missing.", filePath, lineId);
                 file.close();
                 return false;
             }
@@ -610,7 +610,7 @@ private:
 
 
 // the second pass parses the code
-// and builds all the hash expressions
+// and builds all the rules
     bool secondPass(const std::string& filePath)
     {
         std::ifstream file(filePath);
@@ -647,7 +647,7 @@ private:
                     }
 
                     if (line[1] == '#') {
-                        error(concat("the double hash expression '", line,"' is not recognized."), filePath, lineId);
+                        error(concat("the double rule '", line,"' is not recognized."), filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -700,7 +700,7 @@ private:
                     const std::string property = line.substr(memberStart, memberLen);
 
                     if (property != "weight") {
-                        error(concat("'", property, "' is not a property of a hash expression."), filePath, lineId);
+                        error(concat("'", property, "' is not a property of a rule."), filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -757,7 +757,7 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("the second line of this hash expression is missing.", filePath, lineId);
+                        error("the second line of this rule is missing.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -777,7 +777,7 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("the third line of this hash expression is missing.", filePath, lineId);
+                        error("the third line of this rule is missing.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -793,13 +793,13 @@ private:
                     Variable& id = m_variables.find(variableName)->second;
 
                     if (id.weightIntegerOverflow(weight)) {
-                        error("the weight of this hash expression is too big. An integer overflow happened.", filePath, lineId);
+                        error("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
 
                     if (! id.insert(natural, programming, weight)) {
-                        error("we cannot add more hash expressions. This variable is sealed and finished.", filePath, lineId);
+                        error("we cannot add more rules. This variable is sealed and finished.", filePath, lineId);
                         file.close(); 
                         return false;
                     }
@@ -812,12 +812,12 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("the second line of this hash expression is missing.", filePath, lineId);
+                error("the second line of this rule is missing.", filePath, lineId);
                 file.close(); 
                 return false;
             }
             case LineParsingMode::ThirdLine: {
-                error("the third line of this hash expression is missing.", filePath, lineId);
+                error("the third line of this rule is missing.", filePath, lineId);
                 file.close(); 
                 return false;
             }

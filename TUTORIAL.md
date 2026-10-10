@@ -6,7 +6,7 @@ Create an empty directory named 'data' in the same folder as your compiled progr
 Inside this 'data', make a file 'output.iski'.
 We will write code here.
 
-Iskierka code consists of *hash expressions*.
+Iskierka code consists of *rules*.
 Each of them is a series of three lines of text.
 
 ```
@@ -19,7 +19,7 @@ The first one starts with *#* and is followed by a variable name.
 The second line contains natural language text.
 The third line is a code written in some programming language.
 
-Every codebase needs at least one hash expression with variable *output*. Strings are built from here.
+Every codebase needs at least one rule with variable *output*. Strings are built from here.
 
 ```
 #output
@@ -27,7 +27,7 @@ exit
 Application.close(0);
 ```
 
-Each hash expression associates some natural language text with some programming language code.
+Each rule associates some natural language text with some programming language code.
 When we run IskierkaGen with the code above and ask it to generate new values, the output will be always the same.
 Value *exit* as natural language and *Application.close(0);* as code.
 
@@ -41,7 +41,7 @@ give me dozen of normal tickets
 issueTickets(12, TicketType.Normal);
 ```
 
-This code contains two hash expressions with the *output* variable.
+This code contains two rules with the *output* variable.
 Now, there are two possibilities and the output is random. 
 50% of the times it returns *give me three normal tickets* and *issueTickets(3, TicketType.Normal);*.
 Otherwise it returns *give me dozen of normal tickets* and *issueTickets(12, TicketType.Normal);*.
@@ -62,7 +62,7 @@ dozen of
 
 We can define new variables and use them as macros in code.
 Code has been refactored and works exactly the same as previously.
-Values of *_ticketsNumber* are picked randomly at runtime and are inserted into the output hash expression pattern.
+Values of *_ticketsNumber* are picked randomly at runtime and are inserted into the output rule pattern.
 
 ```
 #output weight 6
@@ -94,11 +94,11 @@ pair of
 2
 ```
 
-Hash expressions can be weighted to shape a desired probability distribution. By default their weight is 1.
+Rules can be weighted to shape a desired probability distribution. By default their weight is 1.
 Only nonnegative integers allowed!
 In this code, the first output pattern is the most important. 
 It will be picked 60% of the times. The second is picked 30% of the times and the third with the default weight of 1 is used rarely (10%).
-The 25% probability is used for every hash expression of *ticketsNumber*.
+The 25% probability is used for every rule of *ticketsNumber*.
 
 
 Special value *##empty* represents an empty string. 
