@@ -48,8 +48,12 @@ After compilation, you should prepare an Iskierka codebase (a directory 'data') 
 
 int main(void)
 {
+    // the seed makes this engine deterministic even between operating systems
+    // change the seed to generate different data
+    const uint64_t seed = 1234;
+
     // 'data' is the name of the relative directory with *.iski codes
-    iskierka::IskierkaGen iskierka("data");
+    iskierka::IskierkaGen iskierka(seed, "data");
 
     if (! iskierka.isParsed())
     {

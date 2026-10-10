@@ -102,6 +102,45 @@ static bool isSpace(const char ch)
 
 static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 
+
+struct DeterministicRandom {
+
+public:
+    DeterministicRandom(const uint64_t seed) : m_state(seed) { };
+
+// generate between 0 and (max - 1), so the bound is not included
+    uint64_t nextUint64(const uint64_t max)
+    {
+        if (max == 0) {
+            // this is not safe, but this scenario realistically never happens so nevermind
+            return 0;
+        }
+
+        const uint64_t threshold = -max % max;
+        uint64_t value;
+
+        do 
+        {
+            value = nextU64();
+        } 
+        while (value < threshold);
+
+        return value % max;
+    }
+
+private:
+    uint64_t m_state;
+
+    uint64_t nextU64() 
+    {
+        uint64_t z = (m_state += 0x9E3779B97F4A7C15ULL);
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+        return z ^ (z >> 31);
+    }
+};
+
+
 // here starts the real code
 
 struct Variable;
@@ -164,13 +203,13 @@ private:
 struct Variable
 {
 public:
-    const Rule& getRandomRule(std::mt19937_64& randomness)
+    const Rule& getRandomRule(DeterministicRandom& random)
     {
         if (m_units.size() == 1) {
             return m_units[0];
         }
 
-        const int64_t rand = (*m_distribution)(randomness);
+        const uint64_t rand = random.nextUint64(m_totalWeight);
 
         for (size_t i = 0; i < m_weights.size(); i++) {
             if (m_weights[i] > rand) {
@@ -181,45 +220,22 @@ public:
         return m_units[m_weights.size() - 1];
     };
 
-    bool weightIntegerOverflow(const int64_t addition) const
+    bool weightIntegerOverflow(const uint64_t addition) const
     {
         return addition > MAX_INT64 - m_totalWeight;
     };
 
-    // insert new values
-    // but only if this Variable is not sealed
-    bool insert(std::vector<Unit>& natural, std::vector<Unit>& programming, const int64_t weight)
+    void insert(std::vector<Unit>& natural, std::vector<Unit>& programming, const int64_t weight)
     {
-        if (m_sealed) {
-            return false;
-        }
-
         m_totalWeight += weight;
         m_weights.emplace_back(m_totalWeight);
         m_units.emplace_back(natural, programming);
-
-        return true;
     };
-
-    // Variable is sealed only once
-    // we prepare the probability distribution, so the lists no longer can be extended
-    void seal() 
-    {
-        m_sealed = true;
-        if (m_units.size() == 1) {
-            return;
-        }
-
-        m_distribution = std::make_unique<std::uniform_int_distribution<int64_t>>(0, m_totalWeight - 1);
-    };
-
 
 private:
     std::vector<Rule> m_units;
-    int64_t m_totalWeight = 0;
-    std::vector<int64_t> m_weights;
-    bool m_sealed = false;
-    std::unique_ptr<std::uniform_int_distribution<int64_t>> m_distribution;
+    uint64_t m_totalWeight = 0;
+    std::vector<uint64_t> m_weights;
 };
 
 
@@ -239,15 +255,15 @@ public:
 
     // path = the path to the directory with *.iski files
     // flags = execution flags
-    IskierkaGen(const std::string& path, const uint32_t flags) 
-        : m_flags(flags), m_randomness(m_randomDevice())
+    IskierkaGen(const uint64_t seed, const std::string& path, const uint32_t flags) 
+        : m_random(seed), m_flags(flags)
     {
         loadData(path);
     };
 
     // path = the path to the directory with *.iski files
-    IskierkaGen(const std::string& path) 
-        : m_flags(ISKIERKA_FLAG_NONE), m_randomness(m_randomDevice())
+    IskierkaGen(const uint64_t seed, const std::string& path) 
+        : m_random(seed), m_flags(ISKIERKA_FLAG_NONE)
     {
         loadData(path);
     };
@@ -320,11 +336,6 @@ private:
                 return;
             }
         }
-
-        // seal Variables => prepare probability distributions for them
-        for (auto& id : m_variables) {
-            id.second.seal();
-        }
        
         // if everything is fine, set flag m_isParsed and load m_rootPtr for future fast access
         m_rootPtr = &m_variables.find(ROOT)->second;
@@ -333,7 +344,7 @@ private:
 
     bool evaluateVariable(Variable& var, std::string& natural, std::string& programming)
     {
-        const Rule& expr = var.getRandomRule(m_randomness);
+        const Rule& expr = var.getRandomRule(m_random);
         return evaluateRule(expr, natural, programming);
     };
 
@@ -798,12 +809,7 @@ private:
                         return false;
                     }
 
-                    if (! id.insert(natural, programming, weight)) {
-                        error("we cannot add more rules. This variable is sealed and finished.", filePath, lineId);
-                        file.close(); 
-                        return false;
-                    }
-
+                    id.insert(natural, programming, weight);
                     mode = LineParsingMode::FirstLine;
                     break;
                 }
@@ -1018,8 +1024,7 @@ private:
     bool m_isParsed = false;
     std::unordered_map<std::string, Variable> m_variables;
     Variable* m_rootPtr = nullptr;
-    std::random_device m_randomDevice;
-    std::mt19937_64 m_randomness;
+    DeterministicRandom m_random;
     
     // this is a runtime stack overflow protection mechanism
     // if too many functions are called recursively
