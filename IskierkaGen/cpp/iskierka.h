@@ -499,10 +499,10 @@ public:
     {
         if (m_hadCompilationAttempt) {
             if (m_isCompiled) {
-                throw CompilationError("IskierkaGen already had a compilation attempt, and it failed. You should construct a fresh new object.");
+                throw CompilationError("IskierkaGen has already been compiled. You should construct a fresh new object.");
             }
             else {
-                throw CompilationError("IskierkaGen has already been compiled. You should construct a fresh new object.");
+                throw CompilationError("IskierkaGen already had a compilation attempt, and it failed. You should construct a fresh new object.");
             }
         }
     
