@@ -307,7 +307,8 @@ public:
                 throw CompilationError("This engine has already been compiled. You should construct a fresh new object.");
             }
         }
-
+    
+        m_hadCompilationAttempt = true;
         setSeed(seed);
 
         // get relative paths to all *.iski files in the source directory
