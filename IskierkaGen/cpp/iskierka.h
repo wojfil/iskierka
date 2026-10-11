@@ -1,4 +1,4 @@
-// Created by WojFil Games 2024 - 2025
+// Created by WojFil Games 2024 - 2026
 // This code is licensed under MIT license (see LICENSE.txt for details)
 
 #pragma once
@@ -38,7 +38,13 @@ static constexpr char PREFIX = '_';
 // the default limit of function recursive calls, it prevents stack overflows
 static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 2048;
 
+// this limit of allowed failures in a row seems small
+// but this is only a mirage
+// when the failure rate is 99% and we try 32768 times
+// the probability of all failures is smaller than breaking AES-256 at first trial of brute force
+static constexpr uint64_t DEFAULT_ALLOWED_FAILURES_IN_ROW = 32768;
 
+static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 
 // this section of code provides optimized string concatenation
 
@@ -96,7 +102,6 @@ static bool isSpace(const char ch)
     return std::isspace(ch);
 }
 
-static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 
 
 struct DeterministicRandom 
@@ -279,15 +284,34 @@ public:
             throw GenerationError("IskierkaGen has not been compiled correctly.");
         }
 
-        generationUnit(natural, programming);
+        uint64_t attempts = 0;
+
+        while (true) {
+            if (attempts >= m_allowedFailuresInRow) {
+                throw GenerationError("IskierkaGen has failed to generate a pair of values too many times in a row.");
+            }
+
+            if (generationUnit(natural, programming)) {
+                break;
+            }
+
+            attempts++;
+        }
     };
 
     // set new recursion level limit
     // be careful - too big will cause the program to crash in intense situations
     // you better don't touch that
-    void setLevelLimit(const int64_t limit)
+    void setLevelLimit(const uint64_t limit)
     {
         m_levelLimit = limit;
+    };
+
+    // set your own limit of allowed generation failures in a row
+    // again be careful with too high values
+    void setAllowedFailuresInRow(const uint64_t failures)
+    {
+        m_allowedFailuresInRow = failures;
     };
 
     // reset the generator to a deterministic starting point
@@ -342,21 +366,21 @@ public:
 
 private:
 
-    void generationUnit(std::string& natural, std::string& programming)
+    bool generationUnit(std::string& natural, std::string& programming)
     {
         m_level = 0;
         natural.clear();
         programming.clear();
-        evaluateVariable(*m_rootPtr, natural, programming);
+        return evaluateVariable(*m_rootPtr, natural, programming);
     };
 
-    void evaluateVariable(Variable& var, std::string& natural, std::string& programming)
+    bool evaluateVariable(Variable& var, std::string& natural, std::string& programming)
     {
         const Rule& expr = var.getRandomRule(m_random);
-        evaluateRule(expr, natural, programming);
+        return evaluateRule(expr, natural, programming);
     };
 
-    void evaluateRule(const Rule& expr, std::string& natural, std::string& programming)
+    bool evaluateRule(const Rule& expr, std::string& natural, std::string& programming)
     {
         std::unordered_map<Variable*, std::string> naturals;
         std::unordered_map<Variable*, std::string> programmings;
@@ -368,10 +392,13 @@ private:
             m_level++;
 
             if (m_level >= m_levelLimit) {
-                throw GenerationError("IskierkaGen has failed to generate a pair of values because of too deep recursion.");
+                return false;
             }
 
-            evaluateVariable(*var, n, p);
+            if (! evaluateVariable(*var, n, p)) {
+                return false;
+            }
+
             m_level--;
             
             naturals.emplace(var, n);
@@ -422,6 +449,8 @@ private:
                 }
             }
         }
+
+        return true;
     };
 
     void compilationError(const std::string& msg, const std::string& filePath, const int64_t line)
@@ -1000,8 +1029,11 @@ private:
     // if too many functions are called recursively
     // the next() function is forced to fail instead of causing program crash
     // to turn it off, set m_levelLimit to some arbitrary huge value
-    int64_t m_levelLimit = DEFAULT_RECURSION_LEVEL_LIMIT;
-    int64_t m_level = 0;
+    uint64_t m_levelLimit = DEFAULT_RECURSION_LEVEL_LIMIT;
+    uint64_t m_level = 0;
+
+    // IskierkaGen tries to generate values again after a failure, but its patience is not infinite
+    uint64_t m_allowedFailuresInRow = DEFAULT_ALLOWED_FAILURES_IN_ROW;
 };
 
 };
