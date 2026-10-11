@@ -438,7 +438,7 @@ private:
         WIN32_FIND_DATAA findFileData;
         HANDLE hFind;
 
-        const std::string searchPattern = concat(path, "\\*.", EXTENSION);
+        const std::string searchPattern = concat(path, "/*.", EXTENSION);
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
@@ -447,7 +447,7 @@ private:
 
         do {
             if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-                result.emplace_back(concat(path, '\\', findFileData.cFileName));
+                result.emplace_back(concat(path, '/', findFileData.cFileName));
             }
         }
         while (FindNextFileA(hFind, &findFileData) != 0);
