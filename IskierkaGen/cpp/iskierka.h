@@ -468,7 +468,7 @@ public:
             attempts++;
 
             if (attempts > m_allowedFailuresInRow || (m_allowedFailuresInRow == MAX_UINT64 && attempts == 0)) {
-                throw GenerationError("IskierkaGen has failed to generate a pair of values too many times in a row.");
+                throw GenerationError("IskierkaGen has failed to generate a pair of values. Too many failures in a row.");
             }
         }
     };
