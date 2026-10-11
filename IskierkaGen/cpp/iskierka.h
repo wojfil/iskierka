@@ -34,6 +34,9 @@ static const std::string EXTENSION = "iski";
 // this is the name of the root Variable, we start evaluation from here
 static const std::string ROOT = "output";
 
+// the only built-in variable so far, it represents empty text
+static const std::string VAR_NOTHING = "__nothing";
+
 // prefix of Variables in Iskierka code
 static constexpr char PREFIX = '_';
 
@@ -655,7 +658,7 @@ private:
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == "__nothing") {
+                    if (line.empty() || line[0] != '#' || line == VAR_NOTHING) {
                         break;
                     }
 
@@ -778,7 +781,7 @@ private:
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == "__nothing") {
+                    if (line.empty() || line[0] != '#' || line == VAR_NOTHING) {
                         break;
                     }
 
@@ -887,7 +890,7 @@ private:
                     break;
                 }
                 case LineParsingMode::SecondLine: {
-                    const bool isEmptyLineIdentifier = line == "__nothing";
+                    const bool isEmptyLineIdentifier = line == VAR_NOTHING;
 
                     if (line.empty()) {
                         file.close(); 
@@ -905,14 +908,12 @@ private:
                     break;
                 }
                 case LineParsingMode::ThirdLine: {
-                    const bool isEmptyLineIdentifier = line == "__nothing";
-
                     if (line.empty()) {
                         file.close(); 
                         compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
-                    if (isEmptyLineIdentifier) {
+                    if (line == VAR_NOTHING) {
                         programming.clear();
                     }
                     else {
@@ -1008,13 +1009,13 @@ private:
         }
 
         if (temp[1] == PREFIX) {
-            if (temp == "__nothing") {
+            if (temp == VAR_NOTHING) {
                 result.emplace_back(nullptr);
                 return;
             }
 
             file.close();
-            compilationError(concat("in this version of Iskierka, '__nothing' is the only allowed built-in variable."), 
+            compilationError(concat("in this version of Iskierka, '", VAR_NOTHING, "' is the only allowed built-in variable."), 
                 filePath, lineId);
         }
 
