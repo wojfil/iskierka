@@ -38,11 +38,6 @@ static constexpr char PREFIX = '_';
 // the default limit of function recursive calls, it prevents stack overflows
 static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 2048;
 
-// no execution flags
-static constexpr uint32_t ISKIERKA_FLAG_NONE = 0;  
-
-// errors happen as usual, but they do not print messages in the console
-static constexpr uint32_t ISKIERKA_FLAG_SHOW_NO_ERRORS = 1; 
 
 
 // this section of code provides optimized string concatenation
@@ -274,17 +269,10 @@ class IskierkaGen
 public:
     IskierkaGen() = delete;
 
-    // path = the path to the directory with *.iski files
-    // flags = execution flags
-    IskierkaGen(const uint64_t seed, const std::string& path, const uint32_t flags) 
-        : m_random(seed), m_flags(flags)
-    {
-        loadData(path);
-    };
-
+    // seed = it sets the deterministic behavior
     // path = the path to the directory with *.iski files
     IskierkaGen(const uint64_t seed, const std::string& path) 
-        : m_random(seed), m_flags(ISKIERKA_FLAG_NONE)
+        : m_random(seed)
     {
         loadData(path);
     };
@@ -306,11 +294,6 @@ public:
         programming.clear();
 
         return evaluateVariable(*m_rootPtr, natural, programming);
-    };
-
-    uint32_t getFlags() const
-    {
-        return m_flags;
     };
 
     // set new recursion level limit
@@ -442,19 +425,11 @@ private:
 
     void error(const std::string& msg)
     {
-        if (m_flags & ISKIERKA_FLAG_SHOW_NO_ERRORS) {
-            return;
-        }
-
         std::cout << msg << std::endl;
     };
 
     void error(const std::string& msg, const std::string& filePath, const int64_t line)
     {
-        if (m_flags & ISKIERKA_FLAG_SHOW_NO_ERRORS) {
-            return;
-        }
-
         std::cout << concat("Iskierka error in the file '", filePath, "' at line ", std::to_string(line), ": ", msg) << std::endl;
     };
 
@@ -1059,7 +1034,6 @@ private:
         return true;
     };
 
-    const uint32_t m_flags;
     bool m_isParsed = false;
     std::unordered_map<std::string, Variable> m_variables;
     Variable* m_rootPtr = nullptr;
