@@ -53,10 +53,15 @@ int main(void)
     const uint64_t seed = 1234;
 
     // 'data' is the name of the relative directory with *.iski codes
-    iskierka::IskierkaGen iskierka(seed, "data");
+    iskierka::IskierkaGen iskierka;
 
-    if (! iskierka.isParsed())
+    try 
     {
+        iskierka.compile(seed, "data");
+    }
+    catch (const iskierka::CompilationError& error) 
+    {
+        std::cerr << error.what() << '\n';
         return 1;
     }
 
@@ -65,16 +70,17 @@ int main(void)
 
     for (int i = 0; i < 10; i++)
     {
-        if (iskierka.next(natural, programming))
+        try 
         {
+            iskierka.next(natural, programming);
             std::cout << natural     << std::endl;
             std::cout << programming << std::endl;
             std::cout << std::endl;
         }
-        else
+        catch (const iskierka::GenerationError& error) 
         {
-            std::cout << "IskierkaGen error: failed to produce a pair" << std::endl;
-            std::cout << std::endl;
+            std::cerr << error.what() << '\n';
+            return 1;
         }
     }
 

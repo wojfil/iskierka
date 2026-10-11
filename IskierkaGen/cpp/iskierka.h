@@ -102,9 +102,14 @@ static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 struct DeterministicRandom 
 {
 public:
-    DeterministicRandom(const uint64_t seed) : m_state(seed) { };
 
-// generate between 0 and (max - 1), so the bound is not included
+// reset the engine deterministically
+    void setSeed(const uint64_t seed) 
+    {
+        m_state = seed;
+    }
+
+// generate a value between 0 and (max - 1), so the upper bound is not included
     uint64_t nextUint64(const uint64_t max)
     {
         if (max == 0) {
@@ -143,7 +148,7 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-struct ParseError : public Error 
+struct CompilationError : public Error 
 {
 public:
     using Error::Error;
@@ -154,7 +159,6 @@ struct GenerationError : public Error
 public:
     using Error::Error;
 };
-
 
 
 // here starts the real code
@@ -267,33 +271,15 @@ enum LineParsingMode
 class IskierkaGen
 {
 public:
-    IskierkaGen() = delete;
-
-    // seed = it sets the deterministic behavior
-    // path = the path to the directory with *.iski files
-    IskierkaGen(const uint64_t seed, const std::string& path) 
-        : m_random(seed)
-    {
-        loadData(path);
-    };
-
-    bool isParsed() const
-    {
-        return m_isParsed;
-    };
 
     // call this to generate a new pair of values
-    bool next(std::string& natural, std::string& programming)
+    void next(std::string& natural, std::string& programming)
     {
-        if (! isParsed()) {
-            return false;
+        if (! m_isCompiled) {
+            throw GenerationError("IskierkaGen has not been compiled correctly.");
         }
 
-        m_level = 0;
-        natural.clear();
-        programming.clear();
-
-        return evaluateVariable(*m_rootPtr, natural, programming);
+        generationUnit(natural, programming);
     };
 
     // set new recursion level limit
@@ -303,58 +289,73 @@ public:
     {
         m_levelLimit = limit;
     };
-    
 
-private:
-
-    // read source files with Iskierka codes
-    void loadData(const std::string& path)
+    // reset the generator to a deterministic starting point
+    void setSeed(const uint64_t seed) 
     {
-        // get relative paths to all *.iski files in the source directory
-        std::vector<std::string> src;
-        if (! getFilesInDirectory(src, path)) {
-            return;
+        m_random.setSeed(seed);
+    }
+    
+    // read source files with Iskierka codes and prepare a generator
+    void compile(const uint64_t seed, const std::string& path)
+    {
+        if (m_hadCompilationAttempt) {
+            if (m_isCompiled) {
+                throw CompilationError("This engine already had a compilation attempt, and it failed. You should construct a fresh new object.");
+            }
+            else {
+                throw CompilationError("This engine has already been compiled. You should construct a fresh new object.");
+            }
         }
 
+        setSeed(seed);
+
+        // get relative paths to all *.iski files in the source directory
+        const std::vector<std::string> src = getFilesInDirectory(path);
+
         if (src.empty()) {
-            error(concat("Iskierka error: not a single *.iski file has been found in the directory '", ROOT, "'."));
-            return;
+            throw CompilationError(concat("Iskierka error: not a single *.iski file has been found in the directory '", ROOT, "'."));
         }
 
         std::unordered_map<std::string, std::string> variableFiles;
 
         // then, do the superficial 'first pass'
         for (const std::string& file : src) {
-            if (! firstPass(file, variableFiles)) {
-                return;
-            }
+            firstPass(file, variableFiles);
         }
 
         // escape early if the root variable is not found
         if (m_variables.find(ROOT) == m_variables.end()) {
-            error(concat("Iskierka error: not a single instance of the variable '", ROOT, "' has been found."));
-            return;
+            throw CompilationError(concat("Iskierka error: not a single instance of the variable '", ROOT, "' has been found."));
         }
 
         // build all the rules
         for (const std::string& file : src) {
-            if (! secondPass(file)) {
-                return;
-            }
+            secondPass(file);
         }
        
-        // if everything is fine, set flag m_isParsed and load m_rootPtr for future fast access
+        // if everything is fine, set the flag m_isCompiled and load m_rootPtr for future fast access
         m_rootPtr = &m_variables.find(ROOT)->second;
-        m_isParsed = true;
+        m_isCompiled = true;
     };
 
-    bool evaluateVariable(Variable& var, std::string& natural, std::string& programming)
+private:
+
+    void generationUnit(std::string& natural, std::string& programming)
+    {
+        m_level = 0;
+        natural.clear();
+        programming.clear();
+        evaluateVariable(*m_rootPtr, natural, programming);
+    };
+
+    void evaluateVariable(Variable& var, std::string& natural, std::string& programming)
     {
         const Rule& expr = var.getRandomRule(m_random);
-        return evaluateRule(expr, natural, programming);
+        evaluateRule(expr, natural, programming);
     };
 
-    bool evaluateRule(const Rule& expr, std::string& natural, std::string& programming)
+    void evaluateRule(const Rule& expr, std::string& natural, std::string& programming)
     {
         std::unordered_map<Variable*, std::string> naturals;
         std::unordered_map<Variable*, std::string> programmings;
@@ -365,10 +366,11 @@ private:
 
             m_level++;
 
-            if (m_level >= m_levelLimit || ! evaluateVariable(*var, n, p)) {
-                return false;
+            if (m_level >= m_levelLimit) {
+                throw GenerationError("IskierkaGen has failed to generate a pair of values because of too deep recursion.");
             }
 
+            evaluateVariable(*var, n, p);
             m_level--;
             
             naturals.emplace(var, n);
@@ -419,25 +421,19 @@ private:
                 }
             }
         }
-
-        return true;
     };
 
-    void error(const std::string& msg)
+    void compilationError(const std::string& msg, const std::string& filePath, const int64_t line)
     {
-        std::cout << msg << std::endl;
+        throw CompilationError(concat("Iskierka error in the file '", filePath, "' at line ", std::to_string(line), ": ", msg));
     };
 
-    void error(const std::string& msg, const std::string& filePath, const int64_t line)
-    {
-        std::cout << concat("Iskierka error in the file '", filePath, "' at line ", std::to_string(line), ": ", msg) << std::endl;
-    };
-
-    bool getFilesInDirectory(std::vector<std::string>& result, const std::string& path)
+    std::vector<std::string> getFilesInDirectory(const std::string& path)
     {
 
 #ifdef _WIN32
 
+        std::vector<std::string> result;
         WIN32_FIND_DATAA findFileData;
         HANDLE hFind;
 
@@ -445,8 +441,7 @@ private:
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
-            error(concat("Iskierka error: the source directory '", path, "' could not be opened."));
-            return false;
+            throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
         }
 
         do {
@@ -456,18 +451,17 @@ private:
         }
         while (FindNextFileA(hFind, &findFileData) != 0);
         FindClose(hFind);
-       
-        return true;
+        return result;
 
 #else
 
+        std::vector<std::string> result;
         DIR* dir;
         struct dirent* entry;
         dir = opendir(path.c_str());
 
         if (dir == nullptr) {
-            error(concat("Iskierka error: the source directory '", path, "' could not be opened."));
-            return false;
+            compilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
         }
 
         const std::string extension = concat('.', EXTENSION);
@@ -483,8 +477,8 @@ private:
         }
 
         closedir(dir);
-        return true;
-    
+        return result;
+
 #endif
 
     };
@@ -512,13 +506,12 @@ private:
 // the first pass scans all source files
 // and prepares a map of all used Variables
 // this is the only thing we do here (besides some error checks)
-    bool firstPass(const std::string& filePath, std::unordered_map<std::string, std::string>& variableFiles)
+    void firstPass(const std::string& filePath, std::unordered_map<std::string, std::string>& variableFiles)
     {
         std::ifstream file(filePath);
 
-        if (!file.is_open()) {
-            error(concat("Iskierka error: unable to open the file '", filePath, "'."));
-            return false;
+        if (! file.is_open()) {
+            throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
         LineParsingMode mode = LineParsingMode::FirstLine;
@@ -536,23 +529,20 @@ private:
                     }
 
                     if (line.size() == 1 && line[0] == '#') {
-                        error("missing variable name after #.", filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError("missing variable name after #.", filePath, lineId);
                     }
 
                     if (line[1] == '#') {
-                        error(concat("this version of Iskierka does not support special rules starting with ##."), filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
 
                     size_t start = 1;
 
                     if (! variableAllowedStartChar(line[start])) {
-                        error(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
                     }
 
                     mode = LineParsingMode::SecondLine;
@@ -564,9 +554,8 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                             file.close();
-                            return false;
+                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                         }
                     }
 
@@ -579,11 +568,10 @@ private:
                     else {
                         const std::string& originPath = find->second;
                         if (originPath != filePath) {
-                            error(concat("the variable '", variable, "' has already been defined in the file '", 
+                            file.close();
+                            compilationError(concat("the variable '", variable, "' has already been defined in the file '", 
                                 originPath,  "'. For security reasons, all rules of '", variable,
                                 "' must appear inside one file."), filePath, lineId);
-                            file.close();
-                            return false;
                         }
                     }
 
@@ -592,9 +580,8 @@ private:
                 }
                 case LineParsingMode::SecondLine: {
                     if (line.empty()) {
-                        error("the second line of this rule is missing.", filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
 
                     mode = LineParsingMode::ThirdLine;
@@ -602,9 +589,8 @@ private:
                 }
                 case LineParsingMode::ThirdLine: {
                     if (line.empty()) {
-                        error("the third line of this rule is missing.", filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
                     mode = LineParsingMode::FirstLine;
@@ -615,14 +601,14 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("the second line of this rule is missing.", filePath, lineId);
                 file.close();
-                return false;
+                compilationError("the second line of this rule is missing.", filePath, lineId);
+                break;
             }
             case LineParsingMode::ThirdLine: {
-                error("the third line of this rule is missing.", filePath, lineId);
                 file.close();
-                return false;
+                compilationError("the third line of this rule is missing.", filePath, lineId);
+                break;
             }
             default: {
                 break;
@@ -630,19 +616,17 @@ private:
         }
 
         file.close();
-        return true;
     };
 
 
 // the second pass parses the code
 // and builds all the rules
-    bool secondPass(const std::string& filePath)
+    void secondPass(const std::string& filePath)
     {
         std::ifstream file(filePath);
 
-        if (!file.is_open()) {
-            error(concat("Iskierka error: unable to open the file '", filePath, "'."));
-            return false;
+        if (! file.is_open()) {
+            throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
         LineParsingMode mode = LineParsingMode::FirstLine;
@@ -666,23 +650,20 @@ private:
                     }
 
                     if (line.size() == 1 && line[0] == '#') {
-                        error("missing variable name after #.", filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError("missing variable name after #.", filePath, lineId);
                     }
 
                     if (line[1] == '#') {
-                        error(concat("the double rule '", line,"' is not recognized."), filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
                     
                     size_t start = 1;
 
                     if (! variableAllowedStartChar(line[start])) {
-                        error(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
                     }
 
                     mode = LineParsingMode::SecondLine;
@@ -694,9 +675,8 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            error(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                             file.close(); 
-                            return false;
+                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
                         }
                     }
 
@@ -725,9 +705,8 @@ private:
                     const std::string property = line.substr(memberStart, memberLen);
 
                     if (property != "weight") {
-                        error(concat("'", property, "' is not a property of a rule."), filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError(concat("'", property, "' is not a property of a rule."), filePath, lineId);
                     }
 
                     for (; i < line.size(); i++) {
@@ -737,11 +716,9 @@ private:
                     }
 
                     if (i == line.size()) {
-                        error(concat("the property '", property, "' is not followed by a positive integer argument."), 
-                            filePath, lineId);
-
                         file.close(); 
-                        return false;
+                        compilationError(concat("the property '", property, "' is not followed by a positive integer argument."), 
+                            filePath, lineId);
                     }
                     
                     const size_t integerStart = i;
@@ -760,20 +737,17 @@ private:
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
-                        error(concat("the value '", textWithNumber, "' is not a positive integer."), filePath, lineId);
                         file.close();
-                        return false;
+                        compilationError(concat("the value '", textWithNumber, "' is not a positive integer."), filePath, lineId);
                     }
 
                     try {
                         weight = std::stoll(textWithNumber);
                     } 
                     catch (const std::out_of_range& e) {
-                        error(concat("the number '", property, "' is too big. We are restricted by the range of int64."), 
-                            filePath, lineId);
-
                         file.close(); 
-                        return false;
+                        compilationError(concat("the number '", property, "' is too big. We are restricted by the range of int64."), 
+                            filePath, lineId);
                     }
 
                     break;
@@ -782,17 +756,15 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("the second line of this rule is missing.", filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
                     
                     if (isEmptyLineIdentifier) {
                         natural.clear();
                     }
-                    else if (! parseLine(natural, line, filePath, lineId)) {
-                        file.close(); 
-                        return false;
+                    else {
+                        parseLine(natural, line, filePath, lineId, file);
                     }
 
                     mode = LineParsingMode::ThirdLine;
@@ -802,25 +774,22 @@ private:
                     const bool isEmptyLineIdentifier = line == "__nothing";
 
                     if (line.empty()) {
-                        error("the third line of this rule is missing.", filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
                     if (isEmptyLineIdentifier) {
                         programming.clear();
                     }
-                    else if (! parseLine(programming, line, filePath, lineId)) {
-                        file.close(); 
-                        return false;
+                    else {
+                        parseLine(programming, line, filePath, lineId, file);
                     }
 
                     Variable& id = m_variables.find(variableName)->second;
 
                     if (id.weightIntegerOverflow(weight)) {
-                        error("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
                         file.close(); 
-                        return false;
+                        compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
                     }
 
                     id.insert(natural, programming, weight);
@@ -832,14 +801,14 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                error("the second line of this rule is missing.", filePath, lineId);
                 file.close(); 
-                return false;
+                compilationError("the second line of this rule is missing.", filePath, lineId);
+                break;
             }
             case LineParsingMode::ThirdLine: {
-                error("the third line of this rule is missing.", filePath, lineId);
                 file.close(); 
-                return false;
+                compilationError("the third line of this rule is missing.", filePath, lineId);
+                break;
             }
             default: {
                 break;
@@ -847,7 +816,6 @@ private:
         }
 
         file.close();
-        return true;
     };
 
     void trim(std::string& value) const
@@ -897,38 +865,38 @@ private:
         return true;
     }
 
-    bool insertVariableUnit(std::vector<Unit>& result, const std::string& temp, 
-        const std::string& filePath, const int64_t lineId)
+    void insertVariableUnit(std::vector<Unit>& result, const std::string& temp, 
+        const std::string& filePath, const int64_t lineId, std::ifstream& file)
     {
         if (hasOnlyPrefixChars(temp)) {
             result.emplace_back(temp);
-            return true;
+            return;
         }
 
         if (temp[1] == PREFIX) {
             if (temp == "__nothing") {
                 result.emplace_back(nullptr);
-                return true;
+                return;
             }
 
-            error(concat("in this version of Iskierka, '__nothing' is the only allowed built-in variable."), 
+            file.close();
+            compilationError(concat("in this version of Iskierka, '__nothing' is the only allowed built-in variable."), 
                 filePath, lineId);
-            return false;
         }
 
         const std::string name = temp.substr(1);
         auto var = m_variables.find(name);
 
         if (var == m_variables.end()) {
-            error(concat("the variable '", name, "' has not been defined."), filePath, lineId);
-            return false;
+            file.close();
+            compilationError(concat("the variable '", name, "' has not been defined."), filePath, lineId);
         }
 
         result.emplace_back(&var->second);
-        return true;
     }
 
-    bool parseLine(std::vector<Unit>& result, const std::string& line, const std::string& filePath, const int64_t lineId)
+    void parseLine(std::vector<Unit>& result, const std::string& line, 
+        const std::string& filePath, const int64_t lineId, std::ifstream& file)
     {
         result.clear();
         std::string temp;
@@ -938,10 +906,7 @@ private:
 
             if (! temp.empty() && temp[0] == PREFIX) {
                 if (isSpace(ch)) {
-                    if (! insertVariableUnit(result, temp, filePath, lineId)) {
-                        return false;
-                    }
-
+                    insertVariableUnit(result, temp, filePath, lineId, file);
                     result[result.size() - 1].appendSpace(ch);
                     temp.clear();
                     continue;
@@ -953,10 +918,7 @@ private:
                         continue;
                     }
 
-                    if (! insertVariableUnit(result, temp, filePath, lineId)) {
-                        return false;
-                    }
-
+                    insertVariableUnit(result, temp, filePath, lineId, file);
                     temp = ch;
                     continue;
                 }
@@ -964,9 +926,9 @@ private:
                 if (temp[temp.size() - 1] == PREFIX) {
                     if (variableAllowedStartChar(ch)) {
                         if (temp.size() > 2) {
-                            error(concat("there are too many underscores in a reference to a variable. Only one or two are allowed."), 
+                            file.close();
+                            compilationError(concat("there are too many underscores in a reference to a variable. Only one or two are allowed."), 
                                 filePath, lineId);
-                            return false;
                         }
 
                         temp += ch;
@@ -983,10 +945,7 @@ private:
                     continue;
                 }
 
-                if (! insertVariableUnit(result, temp, filePath, lineId)) {
-                    return false;
-                }
-
+                insertVariableUnit(result, temp, filePath, lineId, file);
                 temp = ch;
                 continue;
             }
@@ -1005,9 +964,7 @@ private:
 
         if (! temp.empty()) {
             if (temp[0] == PREFIX) {
-                if (! insertVariableUnit(result, temp, filePath, lineId)) {
-                    return false;
-                }
+                insertVariableUnit(result, temp, filePath, lineId, file);
             }
             else {
                 result.emplace_back(temp);
@@ -1015,7 +972,7 @@ private:
         }
 
         if (result.empty()) {
-            return true;
+            return;
         }
 
         for (size_t i = 0; i < result.size(); i++) {
@@ -1030,11 +987,10 @@ private:
         if (! result.empty()) {
             result[result.size() - 1].removeSpaces();
         }
-
-        return true;
     };
 
-    bool m_isParsed = false;
+    bool m_hadCompilationAttempt = false;
+    bool m_isCompiled = false;
     std::unordered_map<std::string, Variable> m_variables;
     Variable* m_rootPtr = nullptr;
     DeterministicRandom m_random;
