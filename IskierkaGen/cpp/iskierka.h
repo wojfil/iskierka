@@ -274,6 +274,120 @@ enum LineParsingMode
 };
 
 
+static std::vector<std::string> getFilesInDirectory(const std::string& path)
+{
+
+#ifdef _WIN32
+
+    std::vector<std::string> result;
+    WIN32_FIND_DATAA findFileData;
+    HANDLE hFind;
+
+    const std::string searchPattern = concat(path, "/*.", EXTENSION);
+
+    hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '", 
+            path, "'."));
+    }
+
+    do {
+        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            result.emplace_back(concat(path, '/', findFileData.cFileName));
+        }
+    }
+    while (FindNextFileA(hFind, &findFileData) != 0);
+
+    const DWORD error = GetLastError();
+    FindClose(hFind);
+
+    if (error != ERROR_NO_MORE_FILES) {
+        throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '",
+            path, "' (Windows error: ", error, ")."));
+    }
+
+    return result;
+
+#else
+
+    std::vector<std::string> result;
+    DIR* dir;
+    struct dirent* entry;
+    dir = opendir(path.c_str());
+
+    if (dir == nullptr) {
+        throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+    }
+
+    const std::string extension = concat('.', EXTENSION);
+
+    while (true) {
+        errno = 0;
+        entry = readdir(dir);
+
+        if (entry == nullptr) {
+            if (errno != 0) {
+                const int error = errno;
+                closedir(dir);
+
+                throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
+                    "' (errno ", error, ")."));
+            }
+
+            break;
+        }
+
+        if (entry->d_type != DT_REG && entry->d_type != DT_UNKNOWN) {
+            continue;
+        }
+
+        const std::string filename = entry->d_name;
+
+        if (filename.size() < extension.size() 
+            || filename.compare(filename.size() - extension.size(), extension.size(), extension) != 0)
+        {
+            continue;
+        }
+
+        if (entry->d_type == DT_UNKNOWN) {
+            const std::string fullPath = concat(path, '/', filename);
+            struct stat fileInfo;
+
+            if (stat(fullPath.c_str(), &fileInfo) != 0 || !S_ISREG(fileInfo.st_mode)) {
+                continue;
+            }
+        }
+
+        result.emplace_back(concat(path, '/', filename));
+    }
+
+    closedir(dir);
+    return result;
+
+#endif
+
+};
+
+static bool variableAllowedStartChar(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z');
+};
+
+static bool variableAllowedChar(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z')
+        || (ch >= '0' && ch <= '9');
+};
+
+static bool isLetter(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z');
+};
+
+
 class IskierkaGen
 {
 public:
@@ -458,120 +572,6 @@ private:
     {
         throw CompilationError(concat("Iskierka error in the file '", filePath, "' at line ", std::to_string(line), ": ", msg));
     };
-
-    std::vector<std::string> getFilesInDirectory(const std::string& path)
-    {
-
-#ifdef _WIN32
-
-        std::vector<std::string> result;
-        WIN32_FIND_DATAA findFileData;
-        HANDLE hFind;
-
-        const std::string searchPattern = concat(path, "/*.", EXTENSION);
-
-        hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
-        if (hFind == INVALID_HANDLE_VALUE) {
-            throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '", 
-                path, "'."));
-        }
-
-        do {
-            if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-                result.emplace_back(concat(path, '/', findFileData.cFileName));
-            }
-        }
-        while (FindNextFileA(hFind, &findFileData) != 0);
-
-        const DWORD error = GetLastError();
-        FindClose(hFind);
-
-        if (error != ERROR_NO_MORE_FILES) {
-            throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '",
-                path, "' (Windows error: ", error, ")."));
-        }
-
-        return result;
-
-#else
-
-        std::vector<std::string> result;
-        DIR* dir;
-        struct dirent* entry;
-        dir = opendir(path.c_str());
-
-        if (dir == nullptr) {
-            throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
-        }
-
-        const std::string extension = concat('.', EXTENSION);
-
-        while (true) {
-            errno = 0;
-            entry = readdir(dir);
-
-            if (entry == nullptr) {
-                if (errno != 0) {
-                    const int error = errno;
-                    closedir(dir);
-
-                    throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
-                        "' (errno ", error, ")."));
-                }
-
-                break;
-            }
-
-            if (entry->d_type != DT_REG && entry->d_type != DT_UNKNOWN) {
-                continue;
-            }
-
-            const std::string filename = entry->d_name;
-
-            if (filename.size() < extension.size() 
-                || filename.compare(filename.size() - extension.size(), extension.size(), extension) != 0)
-            {
-                continue;
-            }
-
-            if (entry->d_type == DT_UNKNOWN) {
-                const std::string fullPath = concat(path, '/', filename);
-                struct stat fileInfo;
-
-                if (stat(fullPath.c_str(), &fileInfo) != 0 || !S_ISREG(fileInfo.st_mode)) {
-                    continue;
-                }
-            }
-
-            result.emplace_back(concat(path, '/', filename));
-        }
-
-        closedir(dir);
-        return result;
-
-#endif
-
-    };
-
-    bool variableAllowedStartChar(const char ch) const
-    {
-        return (ch >= 'a' && ch <= 'z')
-            || (ch >= 'A' && ch <= 'Z');
-    };
-   
-    bool variableAllowedChar(const char ch) const
-    {
-        return (ch >= 'a' && ch <= 'z')
-            || (ch >= 'A' && ch <= 'Z')
-            || (ch >= '0' && ch <= '9');
-    };
-
-    bool isLetter(const char ch) const
-    {
-        return (ch >= 'a' && ch <= 'z')
-            || (ch >= 'A' && ch <= 'Z');
-    };
-
 
 // the first pass scans all source files
 // and prepares a map of all used Variables
