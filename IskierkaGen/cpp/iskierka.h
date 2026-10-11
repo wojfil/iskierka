@@ -17,8 +17,10 @@
 #ifdef _WIN32
     #include <windows.h>
 #else
-    #include <dirent.h>
+    #include <cerrno>
     #include <cstring>
+    #include <dirent.h>
+    #include <sys/stat.h>
 #endif
 
 
@@ -104,6 +106,24 @@ static bool isSpace(const char ch)
 }
 
 
+struct Error : public std::runtime_error 
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
+struct CompilationError : public Error 
+{
+public:
+    using Error::Error;
+};
+
+struct GenerationError : public Error 
+{
+public:
+    using Error::Error;
+};
+
 
 struct DeterministicRandom 
 {
@@ -119,8 +139,7 @@ public:
     uint64_t nextUint64(const uint64_t max)
     {
         if (max == 0) {
-            // this is not safe, but this scenario realistically never happens so nevermind
-            return 0;
+            throw GenerationError("The RNG of IskierkaGen could not produce a number smaller than zero.");
         }
 
         const uint64_t threshold = -max % max;
@@ -145,25 +164,6 @@ private:
         z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
         return z ^ (z >> 31);
     }
-};
-
-
-struct Error : public std::runtime_error 
-{
-public:
-    using std::runtime_error::runtime_error;
-};
-
-struct CompilationError : public Error 
-{
-public:
-    using Error::Error;
-};
-
-struct GenerationError : public Error 
-{
-public:
-    using Error::Error;
 };
 
 
@@ -326,10 +326,10 @@ public:
     {
         if (m_hadCompilationAttempt) {
             if (m_isCompiled) {
-                throw CompilationError("This engine already had a compilation attempt, and it failed. You should construct a fresh new object.");
+                throw CompilationError("IskierkaGen already had a compilation attempt, and it failed. You should construct a fresh new object.");
             }
             else {
-                throw CompilationError("This engine has already been compiled. You should construct a fresh new object.");
+                throw CompilationError("IskierkaGen has already been compiled. You should construct a fresh new object.");
             }
         }
     
@@ -472,7 +472,8 @@ private:
 
         hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
         if (hFind == INVALID_HANDLE_VALUE) {
-            throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+            throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '", 
+                path, "'."));
         }
 
         do {
@@ -481,7 +482,15 @@ private:
             }
         }
         while (FindNextFileA(hFind, &findFileData) != 0);
+
+        const DWORD error = GetLastError();
         FindClose(hFind);
+
+        if (error != ERROR_NO_MORE_FILES) {
+            throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '",
+                path, "' (Windows error: ", error, ")."));
+        }
+
         return result;
 
 #else
@@ -492,19 +501,49 @@ private:
         dir = opendir(path.c_str());
 
         if (dir == nullptr) {
-            compilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+            throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
         }
 
         const std::string extension = concat('.', EXTENSION);
 
-        while ((entry = readdir(dir)) != nullptr) {
-            if (entry->d_type == DT_REG) {
-                const std::string filename = entry->d_name;
-                if (filename.size() >= extension.size() && 
-                    filename.compare(filename.size() - extension.size(), extension.size(), extension) == 0) {
-                    result.emplace_back(concat(path, '/', filename));
+        while (true) {
+            errno = 0;
+            entry = readdir(dir);
+
+            if (entry == nullptr) {
+                if (errno != 0) {
+                    const int error = errno;
+                    closedir(dir);
+
+                    throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
+                        "' (errno ", error, ")."));
+                }
+
+                break;
+            }
+
+            if (entry->d_type != DT_REG && entry->d_type != DT_UNKNOWN) {
+                continue;
+            }
+
+            const std::string filename = entry->d_name;
+
+            if (filename.size() < extension.size() 
+                || filename.compare(filename.size() - extension.size(), extension.size(), extension) != 0)
+            {
+                continue;
+            }
+
+            if (entry->d_type == DT_UNKNOWN) {
+                const std::string fullPath = concat(path, '/', filename);
+                struct stat fileInfo;
+
+                if (stat(fullPath.c_str(), &fileInfo) != 0 || !S_ISREG(fileInfo.st_mode)) {
+                    continue;
                 }
             }
+
+            result.emplace_back(concat(path, '/', filename));
         }
 
         closedir(dir);
