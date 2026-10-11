@@ -45,6 +45,7 @@ static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 2048;
 static constexpr uint64_t DEFAULT_ALLOWED_FAILURES_IN_ROW = 32768;
 
 static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
+static constexpr uint64_t MAX_UINT64 = 0xFFFFFFFFFFFFFFFF;
 
 // this section of code provides optimized string concatenation
 
@@ -287,15 +288,15 @@ public:
         uint64_t attempts = 0;
 
         while (true) {
-            if (attempts >= m_allowedFailuresInRow) {
-                throw GenerationError("IskierkaGen has failed to generate a pair of values too many times in a row.");
-            }
-
             if (generationUnit(natural, programming)) {
                 break;
             }
 
             attempts++;
+
+            if (attempts > m_allowedFailuresInRow || (m_allowedFailuresInRow == MAX_UINT64 && attempts == 0)) {
+                throw GenerationError("IskierkaGen has failed to generate a pair of values too many times in a row.");
+            }
         }
     };
 
