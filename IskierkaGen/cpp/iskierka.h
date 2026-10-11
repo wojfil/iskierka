@@ -890,14 +890,12 @@ private:
                     break;
                 }
                 case LineParsingMode::SecondLine: {
-                    const bool isEmptyLineIdentifier = line == VAR_NOTHING;
-
                     if (line.empty()) {
                         file.close(); 
                         compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
                     
-                    if (isEmptyLineIdentifier) {
+                    if (line == VAR_NOTHING) {
                         natural.clear();
                     }
                     else {
