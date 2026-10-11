@@ -105,6 +105,24 @@ static bool isSpace(const char ch)
     return std::isspace(ch);
 }
 
+static bool isLetter(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z');
+};
+
+static bool variableAllowedStartChar(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z');
+};
+
+static bool variableAllowedChar(const char ch)
+{
+    return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z')
+        || (ch >= '0' && ch <= '9');
+};
 
 struct Error : public std::runtime_error 
 {
@@ -370,26 +388,62 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
 static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
 {
-    // todo
-};
+    std::unordered_set<std::string> lowerNames;
+    lowerNames.reserve(paths.size());
 
-static bool variableAllowedStartChar(const char ch)
-{
-    return (ch >= 'a' && ch <= 'z')
-        || (ch >= 'A' && ch <= 'Z');
-};
+    for (const std::string& path : paths) {
+        const int64_t end = static_cast<int64_t>(path.size()) - 1;
+        int64_t start = -1;
 
-static bool variableAllowedChar(const char ch)
-{
-    return (ch >= 'a' && ch <= 'z')
-        || (ch >= 'A' && ch <= 'Z')
-        || (ch >= '0' && ch <= '9');
-};
+        for (int64_t i = end; i >= 0; --i) {
+            if (path[i] == '\\' || path[i] == '/') {
+                start = i + 1;
+                break;
+            }
+        }
 
-static bool isLetter(const char ch)
-{
-    return (ch >= 'a' && ch <= 'z')
-        || (ch >= 'A' && ch <= 'Z');
+        if (start == -1) {
+            start = 0;
+        }
+
+        std::string name = path.substr(start, path.size() - start - EXTENSION.size() - 1);
+
+        if (name.empty()) {
+            throw CompilationError(
+                concat("Every Iskierka file needs a full name. It cannot be just '.", EXTENSION, "'."));
+        }
+
+        if (! variableAllowedStartChar(name[0])) {
+            throw CompilationError(
+                concat("The name of the file '", path, ".", EXTENSION, "' is not correct for an Iskierka file. ",
+                    "It should start with letters [a-zA-Z]."));
+        }
+
+        for (size_t i = 1; i < name.size(); i++) {
+            if (! variableAllowedChar(name[i])) {
+                throw CompilationError(
+                    concat("The name of the file '", path, ".", EXTENSION, "' is not correct for an Iskierka file. ",
+                        "Only characters [a-zA-Z0-9] are allowed."));
+            }
+        }
+
+        std::string lowerName = name;
+
+        for (char& c : lowerName) {
+            if (c >= 'A' && c <= 'Z') {
+                c += 'a' - 'A';
+            }
+        }
+
+        if (lowerNames.find(lowerName) != lowerNames.end()) {
+            throw CompilationError(
+                concat("The name of the file '", path, ".", EXTENSION, "' is not correct for an Iskierka file. ",
+                "Why? Because in the same folder there is another file with the same name case insensitive. ",
+                "Two files with the same name can cause trouble when the project is exported between operating systems."));
+        }
+
+        lowerNames.emplace(lowerName);
+    }
 };
 
 
@@ -619,7 +673,7 @@ private:
 
                     if (! variableAllowedStartChar(line[start])) {
                         file.close();
-                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
+                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters [a-zA-Z] are allowed."), filePath, lineId);
                     }
 
                     mode = LineParsingMode::SecondLine;
@@ -632,7 +686,9 @@ private:
 
                         if (! variableAllowedChar(line[i])) {
                             file.close();
-                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
+                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name. ",
+                                "Only characters [a-zA-Z0-9] are allowed."), filePath, lineId);
+
                         }
                     }
 
@@ -740,7 +796,7 @@ private:
 
                     if (! variableAllowedStartChar(line[start])) {
                         file.close(); 
-                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters a-zA-Z are allowed."), filePath, lineId);
+                        compilationError(concat("variable name cannot start with '", line[1], "'. Only letters [a-zA-Z] are allowed."), filePath, lineId);
                     }
 
                     mode = LineParsingMode::SecondLine;
@@ -753,7 +809,8 @@ private:
 
                         if (! variableAllowedChar(line[i])) {
                             file.close(); 
-                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name."), filePath, lineId);
+                            compilationError(concat("the character '", line[i], "' is not allowed within a variable name. ",
+                                "Only characters [a-zA-Z0-9] are allowed."), filePath, lineId);
                         }
                     }
 
