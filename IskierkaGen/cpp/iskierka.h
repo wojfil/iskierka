@@ -368,6 +368,11 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
 };
 
+static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
+{
+    // todo
+};
+
 static bool variableAllowedStartChar(const char ch)
 {
     return (ch >= 'a' && ch <= 'z')
@@ -452,6 +457,8 @@ public:
 
         // get relative paths to all *.iski files in the source directory
         const std::vector<std::string> src = getFilesInDirectory(path);
+
+        checkFileNamesCorrectness(src);
 
         if (src.empty()) {
             throw CompilationError(concat("Iskierka error: not a single *.iski file has been found in the directory '", ROOT, "'."));
