@@ -29,10 +29,10 @@ namespace iskierka
 {
 
 // extension of Iskierka code files
-static constexpr char EXTENSION[] = "iski";
+static const std::string EXTENSION = "iski";
 
 // this is the name of the root Variable, we start evaluation from here
-static constexpr char ROOT[] = "output";
+static const std::string ROOT = "output";
 
 // prefix of Variables in Iskierka code
 static constexpr char PREFIX = '_';
