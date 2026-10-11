@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <random>
 #include <limits>
+#include <stdexcept>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -103,8 +104,8 @@ static bool isSpace(const char ch)
 static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 
 
-struct DeterministicRandom {
-
+struct DeterministicRandom 
+{
 public:
     DeterministicRandom(const uint64_t seed) : m_state(seed) { };
 
@@ -139,6 +140,26 @@ private:
         return z ^ (z >> 31);
     }
 };
+
+
+struct Error : public std::runtime_error 
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
+struct ParseError : public Error 
+{
+public:
+    using Error::Error;
+};
+
+struct GenerationError : public Error 
+{
+public:
+    using Error::Error;
+};
+
 
 
 // here starts the real code
