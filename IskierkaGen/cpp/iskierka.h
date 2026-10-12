@@ -106,7 +106,7 @@ static std::string concat(Args const&... args)
 
 static bool isSpace(const char ch)
 {
-    return std::isspace(static_cast<unsigned char>(ch)) != 0;
+    return ch == ' ' || (ch >= '\t' && ch <= '\r');
 }
 
 static bool isLetter(const char ch)
