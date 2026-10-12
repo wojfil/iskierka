@@ -454,6 +454,20 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
     }
 };
 
+struct WrappedFile
+{
+public:
+    WrappedFile() = delete;
+    WrappedFile(const std::string& filePath) : m_file(filePath), m_isOpen(m_file.is_open()) { };
+    ~WrappedFile() {
+        if (m_isOpen) {
+            m_file.close();
+        }
+    }
+
+    std::ifstream m_file;
+    const bool m_isOpen;
+};
 
 class IskierkaGen
 {
@@ -650,9 +664,9 @@ private:
 // this is the only thing we do here (besides some error checks)
     void firstPass(const std::string& filePath, std::unordered_map<std::string, std::string>& variableFiles)
     {
-        std::ifstream file(filePath);
+        WrappedFile file(filePath);
 
-        if (! file.is_open()) {
+        if (! file.m_isOpen) {
             throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
@@ -660,7 +674,7 @@ private:
         std::string line;
         int64_t lineId = 0;
 
-        while (std::getline(file, line)) {
+        while (std::getline(file.m_file, line)) {
             trim(line);
             lineId++;
 
@@ -671,19 +685,16 @@ private:
                     }
 
                     if (line.size() == 1 && line[0] == '#') {
-                        file.close();
                         compilationError("missing variable name after #.", filePath, lineId);
                     }
 
                     if (line[1] == '#') {
-                        file.close();
                         compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
 
                     size_t start = 1;
 
                     if (! variableAllowedStartChar(line[start])) {
-                        file.close();
                         compilationError(concat("variable name cannot start with '", line[1], "'. Only letters [a-zA-Z] are allowed."), filePath, lineId);
                     }
 
@@ -696,7 +707,6 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            file.close();
                             compilationError(concat("the character '", line[i], "' is not allowed within a variable name. ",
                                 "Only characters [a-zA-Z0-9] are allowed."), filePath, lineId);
 
@@ -712,7 +722,6 @@ private:
                     else {
                         const std::string& originPath = find->second;
                         if (originPath != filePath) {
-                            file.close();
                             compilationError(concat("the variable '", variable, "' has already been defined in the file '", 
                                 originPath,  "'. For security reasons, all rules of '", variable,
                                 "' must appear inside one file."), filePath, lineId);
@@ -724,7 +733,6 @@ private:
                 }
                 case LineParsingMode::SecondLine: {
                     if (line.empty()) {
-                        file.close();
                         compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
 
@@ -733,7 +741,6 @@ private:
                 }
                 case LineParsingMode::ThirdLine: {
                     if (line.empty()) {
-                        file.close();
                         compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
@@ -745,12 +752,10 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                file.close();
                 compilationError("the second line of this rule is missing.", filePath, lineId);
                 break;
             }
             case LineParsingMode::ThirdLine: {
-                file.close();
                 compilationError("the third line of this rule is missing.", filePath, lineId);
                 break;
             }
@@ -758,8 +763,6 @@ private:
                 break;
             }
         }
-
-        file.close();
     };
 
 
@@ -767,9 +770,9 @@ private:
 // and builds all the rules
     void secondPass(const std::string& filePath)
     {
-        std::ifstream file(filePath);
+        WrappedFile file(filePath);
 
-        if (! file.is_open()) {
+        if (! file.m_isOpen) {
             throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
@@ -783,7 +786,7 @@ private:
         std::vector<Unit> natural;
         std::vector<Unit> programming;
 
-        while (std::getline(file, line)) {
+        while (std::getline(file.m_file, line)) {
             trim(line);
             lineId++;
 
@@ -794,19 +797,16 @@ private:
                     }
 
                     if (line.size() == 1 && line[0] == '#') {
-                        file.close(); 
                         compilationError("missing variable name after #.", filePath, lineId);
                     }
 
                     if (line[1] == '#') {
-                        file.close(); 
                         compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
                     
                     size_t start = 1;
 
                     if (! variableAllowedStartChar(line[start])) {
-                        file.close(); 
                         compilationError(concat("variable name cannot start with '", line[1], "'. Only letters [a-zA-Z] are allowed."), filePath, lineId);
                     }
 
@@ -819,7 +819,6 @@ private:
                         }
 
                         if (! variableAllowedChar(line[i])) {
-                            file.close(); 
                             compilationError(concat("the character '", line[i], "' is not allowed within a variable name. ",
                                 "Only characters [a-zA-Z0-9] are allowed."), filePath, lineId);
                         }
@@ -850,7 +849,6 @@ private:
                     const std::string property = line.substr(memberStart, memberLen);
 
                     if (property != "weight") {
-                        file.close(); 
                         compilationError(concat("'", property, "' is not a property of a rule."), filePath, lineId);
                     }
 
@@ -861,13 +859,11 @@ private:
                     }
 
                     if (i == line.size()) {
-                        file.close(); 
                         compilationError(concat("the property '", property, "' does not contain an argument."), 
                             filePath, lineId);
                     }
 
                     if (line[i] == '-') {
-                        file.close(); 
                         compilationError(concat("the argument of the property '", property, "' cannot be a negative number."), 
                             filePath, lineId);
                     }
@@ -886,7 +882,6 @@ private:
 
                     for (; i < line.size(); i++) {
                         if (! isSpace(line[i])) {
-                            file.close(); 
                             compilationError(concat("the property '", property, "' takes exactly one argument."), 
                                 filePath, lineId);
                         }
@@ -896,7 +891,6 @@ private:
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
-                        file.close();
                         compilationError(concat("the value '", textWithNumber, "' is not a correct for weight."), filePath, lineId);
                     }
 
@@ -904,7 +898,6 @@ private:
                         weight = std::stoll(textWithNumber);
                     } 
                     catch (const std::out_of_range& e) {
-                        file.close(); 
                         compilationError(concat("the number '", property, "' is too big. We are restricted by the range of int64."), 
                             filePath, lineId);
                     }
@@ -913,7 +906,6 @@ private:
                 }
                 case LineParsingMode::SecondLine: {
                     if (line.empty()) {
-                        file.close(); 
                         compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
                     
@@ -921,7 +913,7 @@ private:
                         natural.clear();
                     }
                     else {
-                        parseLine(natural, line, filePath, lineId, file);
+                        parseLine(natural, line, filePath, lineId);
                     }
 
                     mode = LineParsingMode::ThirdLine;
@@ -929,7 +921,6 @@ private:
                 }
                 case LineParsingMode::ThirdLine: {
                     if (line.empty()) {
-                        file.close(); 
                         compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
@@ -937,13 +928,12 @@ private:
                         programming.clear();
                     }
                     else {
-                        parseLine(programming, line, filePath, lineId, file);
+                        parseLine(programming, line, filePath, lineId);
                     }
 
                     Variable& id = m_variables.find(variableName)->second;
 
                     if (id.weightIntegerOverflow(weight)) {
-                        file.close(); 
                         compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
                     }
 
@@ -956,12 +946,10 @@ private:
 
         switch (mode) {
             case LineParsingMode::SecondLine: {
-                file.close(); 
                 compilationError("the second line of this rule is missing.", filePath, lineId);
                 break;
             }
             case LineParsingMode::ThirdLine: {
-                file.close(); 
                 compilationError("the third line of this rule is missing.", filePath, lineId);
                 break;
             }
@@ -969,8 +957,6 @@ private:
                 break;
             }
         }
-
-        file.close();
     };
 
     void trim(std::string& value) const
@@ -1021,7 +1007,7 @@ private:
     }
 
     void insertVariableUnit(std::vector<Unit>& result, const std::string& temp, 
-        const std::string& filePath, const int64_t lineId, std::ifstream& file)
+        const std::string& filePath, const int64_t lineId)
     {
         if (hasOnlyPrefixChars(temp)) {
             result.emplace_back(temp);
@@ -1034,7 +1020,6 @@ private:
                 return;
             }
 
-            file.close();
             compilationError(concat("in this version of Iskierka, '", VAR_NOTHING, "' is the only allowed built-in variable."), 
                 filePath, lineId);
         }
@@ -1043,7 +1028,6 @@ private:
         auto var = m_variables.find(name);
 
         if (var == m_variables.end()) {
-            file.close();
             compilationError(concat("the variable '", name, "' has not been defined."), filePath, lineId);
         }
 
@@ -1051,7 +1035,7 @@ private:
     }
 
     void parseLine(std::vector<Unit>& result, const std::string& line, 
-        const std::string& filePath, const int64_t lineId, std::ifstream& file)
+        const std::string& filePath, const int64_t lineId)
     {
         result.clear();
         std::string temp;
@@ -1061,7 +1045,7 @@ private:
 
             if (! temp.empty() && temp[0] == PREFIX) {
                 if (isSpace(ch)) {
-                    insertVariableUnit(result, temp, filePath, lineId, file);
+                    insertVariableUnit(result, temp, filePath, lineId);
                     result[result.size() - 1].appendSpace(ch);
                     temp.clear();
                     continue;
@@ -1073,7 +1057,7 @@ private:
                         continue;
                     }
 
-                    insertVariableUnit(result, temp, filePath, lineId, file);
+                    insertVariableUnit(result, temp, filePath, lineId);
                     temp = ch;
                     continue;
                 }
@@ -1081,7 +1065,6 @@ private:
                 if (temp[temp.size() - 1] == PREFIX) {
                     if (variableAllowedStartChar(ch)) {
                         if (temp.size() > 2) {
-                            file.close();
                             compilationError(concat("there are too many underscores in a reference to a variable. Only one or two are allowed."), 
                                 filePath, lineId);
                         }
@@ -1100,7 +1083,7 @@ private:
                     continue;
                 }
 
-                insertVariableUnit(result, temp, filePath, lineId, file);
+                insertVariableUnit(result, temp, filePath, lineId);
                 temp = ch;
                 continue;
             }
@@ -1119,7 +1102,7 @@ private:
 
         if (! temp.empty()) {
             if (temp[0] == PREFIX) {
-                insertVariableUnit(result, temp, filePath, lineId, file);
+                insertVariableUnit(result, temp, filePath, lineId);
             }
             else {
                 result.emplace_back(temp);
