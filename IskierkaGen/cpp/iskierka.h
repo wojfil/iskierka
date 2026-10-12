@@ -942,8 +942,12 @@ private:
                     try {
                         weight = std::stoll(textWithNumber);
                     } 
+                    catch (const std::invalid_argument& e) {
+                        compilationError(concat("the number '", textWithNumber, "' is invalid."), 
+                            filePath, lineId);
+                    }
                     catch (const std::out_of_range& e) {
-                        compilationError(concat("the number '", property, "' is too big. We are restricted by the range of int64."), 
+                        compilationError(concat("the number '", textWithNumber, "' is too big. We are restricted by the range of int64."), 
                             filePath, lineId);
                     }
 
