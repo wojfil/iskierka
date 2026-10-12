@@ -551,7 +551,7 @@ public:
         checkFileNamesCorrectness(src);
 
         if (src.empty()) {
-            throw CompilationError(concat("Iskierka error: not a single *.iski file has been found in the directory '", ROOT, "'."));
+            throw CompilationError(concat("Iskierka error: not a single *.iski file has been found in the directory '", path, "'."));
         }
 
         std::unordered_map<std::string, std::string> variableFiles;
