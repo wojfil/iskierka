@@ -761,6 +761,10 @@ private:
             }
         }
 
+        if (file.m_file.bad()) {
+            throw CompilationError(concat("Iskierka error: failed to read the file '", filePath, "'."));
+        }
+
         switch (mode) {
             case LineParsingMode::SecondLine: {
                 compilationError("the second line of this rule is missing.", filePath, lineId);
@@ -953,6 +957,10 @@ private:
                     break;
                 }
             }
+        }
+        
+        if (file.m_file.bad()) {
+            throw CompilationError(concat("Iskierka error: failed to read the file '", filePath, "'."));
         }
 
         switch (mode) {
