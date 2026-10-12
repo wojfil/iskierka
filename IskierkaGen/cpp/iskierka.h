@@ -135,6 +135,17 @@ static bool variableAllowedChar(const char ch)
         || (ch >= '0' && ch <= '9');
 };
 
+static bool isAscii(const std::string& text)
+{
+    for (unsigned char ch : text) {
+        if (ch > 0x7F) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 struct Error : public std::runtime_error 
 {
 public:
@@ -433,6 +444,12 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
                     "It needs a full name. The name cannot be just '.", EXTENSION, "'."));
         }
 
+        if (! isAscii(name)) {
+            throw CompilationError(
+                concat("The name of the file '", path, "' is not correct for Iskierka. ", 
+                    "It should contain only ASCII characters, so it works flawlessly between operating systems."));
+        }
+
         std::string extension = path.substr(path.size() - EXTENSION.size());
 
         if (extension != EXTENSION) {
@@ -553,6 +570,10 @@ public:
     
         m_hadCompilationAttempt = true;
         setSeed(seed);
+
+        if (! isAscii(path)) {
+            throw CompilationError(concat("Iskierka error: the path to the source directory '", path, "' should be pure ASCII."));
+        }
 
         // get relative paths to all *.iski files in the source directory
         const std::vector<std::string> src = getFilesInDirectory(path);
