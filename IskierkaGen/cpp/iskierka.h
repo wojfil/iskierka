@@ -418,19 +418,20 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
 
         if (name.empty()) {
             throw CompilationError(
-                concat("Every Iskierka file needs a full name. It cannot be just '.", EXTENSION, "'."));
+                concat("The name of the file '", path, "' is not correct for Iskierka. ", 
+                    "It needs a full name. The name cannot be just '.", EXTENSION, "'."));
         }
 
         if (! variableAllowedStartChar(name[0])) {
             throw CompilationError(
-                concat("The name of the file '", path, "' is not correct for an Iskierka file. ",
+                concat("The name of the file '", path, "' is not correct for Iskierka. ",
                     "It should start with letters [a-zA-Z]."));
         }
 
         for (size_t i = 1; i < name.size(); i++) {
             if (! variableAllowedChar(name[i])) {
                 throw CompilationError(
-                    concat("The name of the file '", path, "' is not correct for an Iskierka file. ",
+                    concat("The name of the file '", path, "' is not correct for Iskierka. ",
                         "Only characters [a-zA-Z0-9] are allowed."));
             }
         }
@@ -445,7 +446,7 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
 
         if (lowerNames.find(lowerName) != lowerNames.end()) {
             throw CompilationError(
-                concat("The name of the file '", path, "' is not correct for an Iskierka file. ",
+                concat("The name of the file '", path, "' is not correct for Iskierka. ",
                 "Why? Because in the same folder there is another file with the same name case insensitive. ",
                 "Two files with the same name can cause trouble when the project is exported between operating systems."));
         }
