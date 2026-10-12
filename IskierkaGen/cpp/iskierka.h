@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstring>
+#include <cctype>
+#include <cstdint>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -239,14 +241,19 @@ public:
 
     const std::vector<Unit> m_natural;
     const std::vector<Unit> m_programming;
-    std::unordered_set<Variable*> m_uniqueIdents;
+    std::vector<Variable*> m_uniqueIdents;
 
 private:
     void insertUniqueIdents(const std::vector<Unit>& values) 
     {
         for (const Unit& v : values) {
-            if (v.isVariable()) {
-                m_uniqueIdents.emplace(v.getVariablePtr());
+            if (! v.isVariable()) {
+                continue;
+            }
+
+            Variable* var = v.getVariablePtr();
+            if (std::find(m_uniqueIdents.begin(), m_uniqueIdents.end(), var) != m_uniqueIdents.end()) {
+                m_uniqueIdents.emplace_back(var);
             }
         }
     };
