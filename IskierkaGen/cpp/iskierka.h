@@ -307,7 +307,6 @@ enum LineParsingMode
     ThirdLine
 };
 
-
 static std::vector<std::string> getFilesInDirectory(const std::string& path)
 {
 
@@ -326,7 +325,9 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
     }
 
     do {
-        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            && !(findFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) 
+        {
             result.emplace_back(concat(path, '/', findFileData.cFileName));
         }
     }
@@ -388,7 +389,7 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
             const std::string fullPath = concat(path, '/', filename);
             struct stat fileInfo;
 
-            if (stat(fullPath.c_str(), &fileInfo) != 0 || !S_ISREG(fileInfo.st_mode)) {
+            if (lstat(fullPath.c_str(), &fileInfo) != 0 || !S_ISREG(fileInfo.st_mode)) {
                 continue;
             }
         }
@@ -430,6 +431,14 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
             throw CompilationError(
                 concat("The name of the file '", path, "' is not correct for Iskierka. ", 
                     "It needs a full name. The name cannot be just '.", EXTENSION, "'."));
+        }
+
+        std::string extension = path.substr(path.size() - EXTENSION.size());
+
+        if (extension != EXTENSION) {
+            throw CompilationError(
+                concat("The name of the file '", path, "' is not correct for Iskierka. ", 
+                    "Its extension should be in lowercase, so it works flawlessly between operating systems."));
         }
 
         if (! variableAllowedStartChar(name[0])) {
