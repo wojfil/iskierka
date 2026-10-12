@@ -862,7 +862,13 @@ private:
 
                     if (i == line.size()) {
                         file.close(); 
-                        compilationError(concat("the property '", property, "' is not followed by a positive integer argument."), 
+                        compilationError(concat("the property '", property, "' does not contain an argument."), 
+                            filePath, lineId);
+                    }
+
+                    if (line[i] == '-') {
+                        file.close(); 
+                        compilationError(concat("the argument of the property '", property, "' cannot be a negative number."), 
                             filePath, lineId);
                     }
                     
@@ -878,12 +884,20 @@ private:
                         }
                     }
 
+                    for (; i < line.size(); i++) {
+                        if (! isSpace(line[i])) {
+                            file.close(); 
+                            compilationError(concat("the property '", property, "' takes exactly one argument."), 
+                                filePath, lineId);
+                        }
+                    }
+
                     const size_t integerLen = i - integerStart;
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
                         file.close();
-                        compilationError(concat("the value '", textWithNumber, "' is not a positive integer."), filePath, lineId);
+                        compilationError(concat("the value '", textWithNumber, "' is not a correct for weight."), filePath, lineId);
                     }
 
                     try {
