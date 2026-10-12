@@ -252,7 +252,7 @@ private:
             }
 
             Variable* var = v.getVariablePtr();
-            if (std::find(m_uniqueIdents.begin(), m_uniqueIdents.end(), var) != m_uniqueIdents.end()) {
+            if (std::find(m_uniqueIdents.begin(), m_uniqueIdents.end(), var) == m_uniqueIdents.end()) {
                 m_uniqueIdents.emplace_back(var);
             }
         }
