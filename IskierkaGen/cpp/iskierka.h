@@ -13,12 +13,13 @@
 #include <random>
 #include <limits>
 #include <stdexcept>
+#include <algorithm>
+#include <cstring>
 
 #ifdef _WIN32
     #include <windows.h>
 #else
     #include <cerrno>
-    #include <cstring>
     #include <dirent.h>
     #include <sys/stat.h>
 #endif
@@ -332,6 +333,7 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
             path, "' (Windows error: ", error, ")."));
     }
 
+    std::sort(result.begin(), result.end());
     return result;
 
 #else
@@ -388,6 +390,7 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
     }
 
     closedir(dir);
+    std::sort(result.begin(), result.end());
     return result;
 
 #endif
