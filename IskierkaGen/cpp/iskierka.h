@@ -453,6 +453,9 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
 class IskierkaGen
 {
 public:
+    IskierkaGen() { };
+    IskierkaGen(const IskierkaGen&) = delete;
+    IskierkaGen& operator=(const IskierkaGen&) = delete;
 
     // call this to generate a new pair of values
     void next(std::string& natural, std::string& programming)
