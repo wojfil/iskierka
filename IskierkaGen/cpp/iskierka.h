@@ -114,6 +114,11 @@ static bool isLetter(const char ch)
         || (ch >= 'A' && ch <= 'Z');
 };
 
+static bool isDigit(const char ch)
+{
+    return ch >= '0' && ch <= '9';
+};
+
 static bool variableAllowedStartChar(const char ch)
 {
     return (ch >= 'a' && ch <= 'z')
@@ -868,7 +873,7 @@ private:
                         if (isSpace(line[i])) {
                             break;
                         }
-                        else if (! std::isdigit(line[i])) {
+                        else if (! isDigit(line[i])) {
                             wrongNumber = true;
                         }
                     }
