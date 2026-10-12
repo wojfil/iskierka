@@ -1132,6 +1132,9 @@ private:
             return;
         }
 
+        result.erase(std::remove_if(result.begin(), result.end(), 
+            [](const Unit& unit) { return unit.isNothing();} ), result.end());
+
         for (size_t i = 0; i < result.size(); i++) {
             const Unit& unit = result[i];
 
