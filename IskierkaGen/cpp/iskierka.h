@@ -40,8 +40,8 @@ static const std::string ROOT = "output";
 // the only built-in variable so far, it represents empty text
 static const std::string VAR_NOTHING = "__nothing";
 
-// prefix of Variables in Iskierka code
-static constexpr char PREFIX = '_';
+static constexpr char RULE_START_PREFIX = '#';
+static constexpr char VARIABLE_PREFIX = '_';
 
 // the default limit of function recursive calls, it prevents stack overflows
 static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 2048;
@@ -721,15 +721,15 @@ private:
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == VAR_NOTHING) {
+                    if (line.empty() || line[0] != RULE_START_PREFIX || line == VAR_NOTHING) {
                         break;
                     }
 
-                    if (line.size() == 1 && line[0] == '#') {
+                    if (line.size() == 1 && line[0] == RULE_START_PREFIX) {
                         compilationError("missing variable name after #.", filePath, lineId);
                     }
 
-                    if (line[1] == '#') {
+                    if (line[1] == RULE_START_PREFIX) {
                         compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
 
@@ -837,15 +837,15 @@ private:
 
             switch (mode) {
                 case LineParsingMode::FirstLine: {
-                    if (line.empty() || line[0] != '#' || line == VAR_NOTHING) {
+                    if (line.empty() || line[0] != RULE_START_PREFIX || line == VAR_NOTHING) {
                         break;
                     }
 
-                    if (line.size() == 1 && line[0] == '#') {
+                    if (line.size() == 1 && line[0] == RULE_START_PREFIX) {
                         compilationError("missing variable name after #.", filePath, lineId);
                     }
 
-                    if (line[1] == '#') {
+                    if (line[1] == RULE_START_PREFIX) {
                         compilationError("this version of Iskierka does not support special rules starting with ##.", filePath, lineId);
                     }
                     
@@ -1052,7 +1052,7 @@ private:
     bool hasOnlyPrefixChars(const std::string& value) const
     {
         for (const char ch : value) {
-            if (ch != PREFIX) {
+            if (ch != VARIABLE_PREFIX) {
                 return false;
             }
         }
@@ -1067,7 +1067,7 @@ private:
             return;
         }
 
-        if (temp[1] == PREFIX) {
+        if (temp[1] == VARIABLE_PREFIX) {
             if (temp == VAR_NOTHING) {
                 result.emplace_back(nullptr);
                 return;
@@ -1096,7 +1096,7 @@ private:
         for (size_t i = 0; i < line.size(); i++) {
             const char ch = line[i];
 
-            if (! temp.empty() && temp[0] == PREFIX) {
+            if (! temp.empty() && temp[0] == VARIABLE_PREFIX) {
                 if (isSpace(ch)) {
                     insertVariableUnit(result, temp, filePath, lineId);
                     result[result.size() - 1].appendSpace(ch);
@@ -1104,9 +1104,9 @@ private:
                     continue;
                 }
 
-                if (ch == PREFIX) {
-                    if (temp[temp.size() - 1] == PREFIX) {
-                        temp += PREFIX;
+                if (ch == VARIABLE_PREFIX) {
+                    if (temp[temp.size() - 1] == VARIABLE_PREFIX) {
+                        temp += VARIABLE_PREFIX;
                         continue;
                     }
 
@@ -1115,7 +1115,7 @@ private:
                     continue;
                 }
 
-                if (temp[temp.size() - 1] == PREFIX) {
+                if (temp[temp.size() - 1] == VARIABLE_PREFIX) {
                     if (variableAllowedStartChar(ch)) {
                         if (temp.size() > 2) {
                             compilationError(concat("there are too many underscores in a reference to a variable. Only one or two are allowed."), 
@@ -1141,7 +1141,7 @@ private:
                 continue;
             }
             
-            if (ch == PREFIX) {
+            if (ch == VARIABLE_PREFIX) {
                 if (! temp.empty()) {
                     result.emplace_back(temp);
                 }
@@ -1154,7 +1154,7 @@ private:
         }
 
         if (! temp.empty()) {
-            if (temp[0] == PREFIX) {
+            if (temp[0] == VARIABLE_PREFIX) {
                 insertVariableUnit(result, temp, filePath, lineId);
             }
             else {
