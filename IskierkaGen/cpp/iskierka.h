@@ -207,8 +207,8 @@ public:
     Unit(Variable* variable) 
         : m_value(), m_variable(variable) { };
 
-    std::string getString() const { return m_value; }  
-    std::string getSpaces() const { return m_followingSpaces; }  
+    const std::string& getString() const { return m_value; }  
+    const std::string& getSpaces() const { return m_followingSpaces; }  
     void appendSpace(const char ch) { m_followingSpaces += ch; }  
     Variable* getVariablePtr() const { return m_variable; };
     bool isConstant() const { return ! m_value.empty() && m_variable == nullptr; };
