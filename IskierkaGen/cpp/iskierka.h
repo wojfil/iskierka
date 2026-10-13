@@ -342,8 +342,8 @@ enum LineParsingMode
     struct DirWrapper
     {
     public:
-        DirWrappere(DIR* dir) : m_dir(dir) { }
-        ~DirectoryHandle() {
+        DirWrapper(DIR* dir) : m_dir(dir) { }
+        ~DirWrapper() {
             if (m_dir != nullptr) {
                 closedir(m_dir);
             }
