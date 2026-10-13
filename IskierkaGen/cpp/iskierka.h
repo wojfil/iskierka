@@ -109,12 +109,6 @@ static bool isSpace(const char ch)
     return ch == ' ' || (ch >= '\t' && ch <= '\r');
 }
 
-static bool isLetter(const char ch)
-{
-    return (ch >= 'a' && ch <= 'z')
-        || (ch >= 'A' && ch <= 'Z');
-};
-
 static bool isDigit(const char ch)
 {
     return ch >= '0' && ch <= '9';
