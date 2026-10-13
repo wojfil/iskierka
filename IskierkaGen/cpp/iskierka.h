@@ -925,6 +925,8 @@ private:
                         }
                     }
 
+                    const size_t int_i = i;
+
                     for (; i < line.size(); i++) {
                         if (! isSpace(line[i])) {
                             compilationError(concat("the property '", property, "' takes exactly one argument."), 
@@ -932,7 +934,7 @@ private:
                         }
                     }
 
-                    const size_t integerLen = i - integerStart;
+                    const size_t integerLen = int_i - integerStart;
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
