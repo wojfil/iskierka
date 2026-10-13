@@ -112,7 +112,7 @@ generator.compile(seed, folder)
 for _ in range(10):
     natural, programming = generator.next()
     
-    print()
     print(natural)
     print(programming)
+    print()
 ```
