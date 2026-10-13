@@ -316,11 +316,43 @@ enum LineParsingMode
     ThirdLine
 };
 
-bool hasLowercaseExtension(const std::string& name)
-{
-    return name.size() >= EXTENSION.size()
-        && name.compare(name.size() - EXTENSION.size(), EXTENSION.size(), EXTENSION) == 0;
-};
+#ifdef _WIN32
+
+    bool hasLowercaseExtension(const std::string& name)
+    {
+        return name.size() >= EXTENSION.size()
+            && name.compare(name.size() - EXTENSION.size(), EXTENSION.size(), EXTENSION) == 0;
+    };
+
+    struct HandleWrapper
+    {
+    public:
+        HandleWrapper(HANDLE handle) : m_handle(handle) { }
+        ~HandleWrapper() {
+            if (m_handle != INVALID_HANDLE_VALUE) {
+                FindClose(m_handle);
+            }
+        }
+
+        HANDLE m_handle;
+    };
+
+#else
+
+    struct DirWrapper
+    {
+    public:
+        DirWrappere(DIR* dir) : m_dir(dir) { }
+        ~DirectoryHandle() {
+            if (m_dir != nullptr) {
+                closedir(m_dir);
+            }
+        }
+
+        DIR* m_dir;
+    };
+
+#endif
 
 static std::vector<std::string> getFilesInDirectory(const std::string& path)
 {
@@ -329,12 +361,10 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
     std::vector<std::string> result;
     WIN32_FIND_DATAA findFileData;
-    HANDLE hFind;
-
     const std::string searchPattern = concat(path, "/*.", EXTENSION);
 
-    hFind = FindFirstFileA(searchPattern.c_str(), &findFileData);
-    if (hFind == INVALID_HANDLE_VALUE) {
+    HandleWrapper hFind(FindFirstFileA(searchPattern.c_str(), &findFileData));
+    if (hFind.m_handle == INVALID_HANDLE_VALUE) {
         throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '", 
             path, "'."));
     }
@@ -349,10 +379,9 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
             }
         }
     }
-    while (FindNextFileA(hFind, &findFileData) != 0);
+    while (FindNextFileA(hFind.m_handle, &findFileData) != 0);
 
     const DWORD error = GetLastError();
-    FindClose(hFind);
 
     if (error != ERROR_NO_MORE_FILES) {
         throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '",
@@ -365,11 +394,10 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 #else
 
     std::vector<std::string> result;
-    DIR* dir;
     struct dirent* entry;
-    dir = opendir(path.c_str());
+    DirWrapper dir(opendir(path.c_str()));
 
-    if (dir == nullptr) {
+    if (dir.m_dir == nullptr) {
         throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
     }
 
@@ -377,12 +405,12 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
     while (true) {
         errno = 0;
-        entry = readdir(dir);
+        entry = readdir(dir.m_dir);
 
         if (entry == nullptr) {
             if (errno != 0) {
                 const int error = errno;
-                closedir(dir);
+                closedir(dir.m_dir);
 
                 throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
                     "' (errno ", error, ")."));
@@ -417,7 +445,6 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
         }
     }
 
-    closedir(dir);
     std::sort(result.begin(), result.end());
     return result;
 
