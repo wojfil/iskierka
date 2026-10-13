@@ -37,7 +37,7 @@ Go [here](https://github.com/wojfil/perun2-iskierka) to see an example Iskierka 
 [Right here](TUTORIAL.md) you can find a quick tutorial.
 Iskierka has some interesting and unique [design patterns](TERMINOLOGY.md).
 
-## How to run?
+## How to run? (C++)
 
 In code below we use the header-only C++ implementation of IskierkaGen.
 Make sure to put 'iskierka.h' in the same directory as 'main.cpp'.
@@ -51,13 +51,14 @@ int main(void)
     // the seed makes this engine deterministic even between operating systems
     // change the seed to generate different data
     const uint64_t seed = 1234;
+    const std::string folder = "data";
 
     // 'data' is the name of the relative directory with *.iski codes
     iskierka::IskierkaGen iskierka;
 
     try 
     {
-        iskierka.compile(seed, "data");
+        iskierka.compile(seed, folder);
     }
     catch (const iskierka::CompilationError& error) 
     {
@@ -86,4 +87,32 @@ int main(void)
 
     return 0;
 }
+```
+
+## How to run? (Python)
+
+Using Iskierka from Python is very convenient.
+First, you have to install it from PyPI.
+
+```
+python -m pip install iskierka
+```
+
+Here comes the example code.
+
+```
+import iskierka
+
+seed = 1234
+folder = "data"
+
+generator = iskierka.IskierkaGen()
+generator.compile(seed, folder)
+
+for _ in range(10):
+    natural, programming = generator.next()
+    
+    print()
+    print(natural)
+    print(programming)
 ```
