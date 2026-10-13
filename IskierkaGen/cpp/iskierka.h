@@ -532,6 +532,10 @@ public:
     // call this to generate a new pair of values
     void next(std::string& natural, std::string& programming)
     {
+        if (! m_hadCompilationAttempt) {
+            throw GenerationError("IskierkaGen has not been compiled.");
+        }
+
         if (! m_isCompiled) {
             throw GenerationError("IskierkaGen has not been compiled correctly.");
         }
