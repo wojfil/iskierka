@@ -528,6 +528,8 @@ public:
             attempts++;
 
             if (attempts > m_allowedFailuresInRow || (m_allowedFailuresInRow == MAX_UINT64 && attempts == 0)) {
+                natural.clear();
+                programming.clear();
                 throw GenerationError("IskierkaGen has failed to generate a pair of values. Too many failures in a row.");
             }
         }
