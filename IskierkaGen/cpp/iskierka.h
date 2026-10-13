@@ -316,6 +316,12 @@ enum LineParsingMode
     ThirdLine
 };
 
+bool hasLowercaseExtension(const std::string& name)
+{
+    return name.size() >= EXTENSION.size()
+        && name.compare(name.size() - EXTENSION.size(), EXTENSION.size(), EXTENSION) == 0;
+};
+
 static std::vector<std::string> getFilesInDirectory(const std::string& path)
 {
 
@@ -337,7 +343,10 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
         if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             && !(findFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) 
         {
-            result.emplace_back(concat(path, '/', findFileData.cFileName));
+            std::string name = findFileData.cFileName;
+            if (name.size() != (EXTENSION.size() + 1) && hasLowercaseExtension(name)) {
+                result.emplace_back(concat(path, '/', name));
+            }
         }
     }
     while (FindNextFileA(hFind, &findFileData) != 0);
@@ -403,7 +412,9 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
             }
         }
 
-        result.emplace_back(concat(path, '/', filename));
+        if (filename.size() != (EXTENSION.size() + 1)) {
+            result.emplace_back(concat(path, '/', filename));
+        }
     }
 
     closedir(dir);
@@ -436,24 +447,10 @@ static void checkFileNamesCorrectness(const std::vector<std::string>& paths)
 
         std::string name = path.substr(start, path.size() - start - EXTENSION.size() - 1);
 
-        if (name.empty()) {
-            throw CompilationError(
-                concat("The name of the file '", path, "' is not correct for Iskierka. ", 
-                    "It needs a full name. The name cannot be just '.", EXTENSION, "'."));
-        }
-
         if (! isAscii(name)) {
             throw CompilationError(
                 concat("The name of the file '", path, "' is not correct for Iskierka. ", 
                     "It should contain only ASCII characters, so it works flawlessly between operating systems."));
-        }
-
-        std::string extension = path.substr(path.size() - EXTENSION.size());
-
-        if (extension != EXTENSION) {
-            throw CompilationError(
-                concat("The name of the file '", path, "' is not correct for Iskierka. ", 
-                    "Its extension should be in lowercase, so it works flawlessly between operating systems."));
         }
 
         if (! variableAllowedStartChar(name[0])) {
