@@ -1169,15 +1169,6 @@ private:
         result.erase(std::remove_if(result.begin(), result.end(), 
             [](const Unit& unit) { return unit.isNothing();} ), result.end());
 
-        for (size_t i = 0; i < result.size(); i++) {
-            const Unit& unit = result[i];
-
-            if (unit.isNothing()) {
-                result.erase(result.begin() + i);
-                i--;
-            }
-        }
-
         if (! result.empty()) {
             result[result.size() - 1].removeSpaces();
         }
