@@ -19,17 +19,27 @@ See below the animated process of Perun2 code generation along with text in Engl
 
 ![Codegen example](perun2gen.gif)
 
-Directory IskierkaGen contains a header-only C++ implementation of IskierkaGen. It automatically supports both Win32 API and POSIX.
-
 ## How does it work?
 
 This is a context-free rewriting system similar to Lindenmayer system ([link](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
 
 There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instances get the same value. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
 
+## External links
+
+- [YouTube presentation video](https://www.youtube.com/watch?v=Y6TnbvZ4cko)
+- [Page on WojFil Games Wiki](https://wojfilgames.fandom.com/wiki/Iskierka)
+
+## Implementation
+
+The directory *IskierkaGen/cpp* contains a header-only C++ implementation of IskierkaGen. 
+It automatically supports both Win32 API and POSIX.
+In the directory *python* there is a Python wrapper around this C++ header file.
+As a result, the Iskierka can be used from both C++ and Python.
+
 ## Codebases
 
-Iskierka has been initially designed by WojFil Games for code generation of the Perun2 programming language.
+Initially, Iskierka has been designed by WojFil Games for code generation of the Perun2 programming language.
 Go [here](https://github.com/wojfil/perun2-iskierka) to see an example Iskierka codebase prepared for Perun2.
 
 ## Other links
@@ -39,7 +49,7 @@ Iskierka has some interesting and unique [design patterns](TERMINOLOGY.md).
 
 ## How to run? (C++)
 
-In code below we use the header-only C++ implementation of IskierkaGen.
+In the code below we use the header-only C++ implementation of IskierkaGen.
 Make sure to put 'iskierka.h' in the same directory as 'main.cpp'.
 After compilation, you should prepare an Iskierka codebase (a directory 'data') in the location with the compiled program.
 
@@ -92,13 +102,13 @@ int main(void)
 ## How to run? (Python)
 
 Using Iskierka from Python is very convenient.
-First, you have to install it from PyPI.
+You can install it from PyPI and use like any typical library.
 
 ```
 python -m pip install iskierka
 ```
 
-Here comes the example code.
+Here is the example code.
 
 ```
 import iskierka
