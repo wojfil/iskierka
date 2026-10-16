@@ -283,6 +283,10 @@ public:
         return m_units[m_weights.size() - 1];
     };
 
+    bool canGenerateValues() const {
+        return m_totalWeight != 0;
+    };
+
     bool weightIntegerOverflow(const uint64_t addition) const
     {
         return addition > MAX_INT64 - m_totalWeight;
@@ -640,6 +644,10 @@ private:
 
     bool evaluateVariable(Variable& var, std::string& natural, std::string& programming)
     {
+        if (! var.canGenerateValues()) {
+            return false;
+        }
+
         const Rule& expr = var.getRandomRule(m_random);
         return evaluateRule(expr, natural, programming);
     };
