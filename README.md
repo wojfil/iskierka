@@ -98,28 +98,5 @@ int main(void)
 
 ## How to run? (Python)
 
-Using Iskierka from Python is very convenient.
-You can install it from PyPI and use like any typical library.
+If want to know how to use Iskierka from Python, go to the [designated README.md](python/README.md).
 
-```
-python -m pip install iskierka
-```
-
-Here is the example code.
-
-```
-import iskierka
-
-seed = 1234
-folder = "data"
-
-generator = iskierka.IskierkaGen()
-generator.compile(seed, folder)
-
-for _ in range(10):
-    natural, programming = generator.next()
-    
-    print(natural)
-    print(programming)
-    print()
-```
