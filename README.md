@@ -28,7 +28,6 @@ There are several differences between Iskierka and L-systems. The most notable o
 ## External links
 
 - [YouTube presentation video](https://www.youtube.com/watch?v=Y6TnbvZ4cko)
-- [Page on WojFil Games Wiki](https://wojfilgames.fandom.com/wiki/Iskierka)
 
 ## Implementation
 
