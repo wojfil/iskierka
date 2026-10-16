@@ -61,8 +61,6 @@ int main(void)
     // change the seed to generate different data
     const uint64_t seed = 1234;
     const std::string folder = "data";
-
-    // 'data' is the name of the relative directory with *.iski codes
     iskierka::IskierkaGen iskierka;
 
     try 
