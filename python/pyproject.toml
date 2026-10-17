@@ -15,6 +15,11 @@ license = "MIT"
 
 [tool.scikit-build]
 cmake.source-dir = "."
+sdist.include = [
+    "CMakeLists.txt",
+    "bindings.cpp",
+    "../cpp/iskierka.h",
+]
 
 [tool.cibuildwheel]
 test-requires = ["pytest"]
