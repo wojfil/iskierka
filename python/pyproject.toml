@@ -15,3 +15,7 @@ license = "MIT"
 
 [tool.scikit-build]
 cmake.source-dir = "."
+
+[tool.cibuildwheel]
+test-requires = ["pytest"]
+test-command = "python -m pytest {project}/tests"
