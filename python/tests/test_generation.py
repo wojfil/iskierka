@@ -3,7 +3,7 @@ import iskierka
 from pathlib import Path
 
 TESTS_DIR = Path(__file__).resolve().parent
-DATA_DIR = TESTS_DIR / "gendata"
+DATA_DIR = str(TESTS_DIR / "gendata")
 
 
 
