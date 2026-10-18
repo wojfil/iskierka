@@ -42,6 +42,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: dist-${{ matrix.os }}
+          shell: bash
           path: python/wheelhouse/*.whl
 
   build-sdist:
@@ -98,4 +99,3 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           attestations: false
-          
