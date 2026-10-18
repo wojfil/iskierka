@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "iskierka"
-version = "2.0.6"
+version = "2.0.7"
 description = "Contains IskierkaGen, a synthetic data generator"
 readme = "README.md"
 requires-python = ">=3.9"
