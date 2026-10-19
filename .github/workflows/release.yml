@@ -43,7 +43,7 @@ jobs:
         with:
           name: dist-${{ matrix.os }}
           shell: bash
-          path: python/wheelhouse/*.whl
+          path: src/wheelhouse/*.whl
 
   build-sdist:
     name: Build source distribution
@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: dist-sdist
-          path: python/dist/*.tar.gz
+          path: src/dist/*.tar.gz
 
   publish:
     name: Publish to TestPyPI

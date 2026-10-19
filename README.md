@@ -31,7 +31,7 @@ There are several differences between Iskierka and L-systems. The most notable o
 
 ## Implementation
 
-The directory *cpp* contains a header-only C++ implementation of IskierkaGen. 
+The directory *src* contains a header-only C++ implementation of IskierkaGen. 
 It automatically supports both Win32 API and POSIX.
 In the directory *python* there is a Python wrapper around this C++ header file.
 As a result, the Iskierka can be used from both C++ and Python.
