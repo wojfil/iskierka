@@ -11,6 +11,10 @@ do something
 print('hello, world');
 ```
 
+## External links
+
+- [YouTube presentation video](https://www.youtube.com/watch?v=Y6TnbvZ4cko)
+
 ## IskierkaGen
 
 IskierkaGen establishes an infinite source of synthetic data for AI based on rules from some Iskierka codebase.
@@ -24,10 +28,6 @@ See below the animated process of Perun2 code generation along with text in Engl
 This is a context-free rewriting system similar to the Lindenmayer system ([link](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
 
 There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instances get the same value. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
-
-## External links
-
-- [YouTube presentation video](https://www.youtube.com/watch?v=Y6TnbvZ4cko)
 
 ## Implementation
 
