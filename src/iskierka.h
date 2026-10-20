@@ -42,13 +42,13 @@ static constexpr char RULE_START_PREFIX = '#';
 static constexpr char VARIABLE_PREFIX = '_';
 
 // the default limit of function recursive calls, it prevents stack overflows
-static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 2048;
+static constexpr uint64_t DEFAULT_RECURSION_LEVEL_LIMIT = 1024;
 
 // this limit of allowed failures in a row seems small
 // but this is only a mirage
-// when the failure rate is 99% and we try 32768 times
-// the probability of all failures is smaller than breaking AES-256 at first trial of brute force
-static constexpr uint64_t DEFAULT_ALLOWED_FAILURES_IN_ROW = 32768;
+// when the failure rate is 99% and we try 16384 times
+// the probability of all failures is smaller than breaking AES-192 at first trial of brute force
+static constexpr uint64_t DEFAULT_ALLOWED_FAILURES_IN_ROW = 16384;
 
 static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 static constexpr uint64_t MAX_UINT64 = 0xFFFFFFFFFFFFFFFF;
