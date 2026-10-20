@@ -99,3 +99,8 @@ int main(void)
 ## How to run? (Python)
 
 Go to [designated README.md](python/README.md).
+
+## License
+
+This project is licensed under the MIT License.
+[See LICENSE](LICENSE.txt).
