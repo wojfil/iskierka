@@ -21,7 +21,7 @@ See below the animated process of Perun2 code generation along with text in Engl
 
 ## How does it work?
 
-This is a context-free rewriting system similar to Lindenmayer system ([link](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
+This is a context-free rewriting system similar to the Lindenmayer system ([link](https://en.wikipedia.org/wiki/L-system)). We define production rules and at runtime they are applied to variables until only constants are left. 
 
 There are several differences between Iskierka and L-systems. The most notable one is that we produce two strings at once and variables are treated as inseparable pairs of strings. The system is stochastic as we can assign multiple production rules to one variable. If the same variable appears more than once in a production rule, then randomization is performed only once locally and all variable instances get the same value. Unlike the classic Lindenmayer system, we have to use the depth-first algorithm for variable evaluation here.
 
@@ -31,10 +31,10 @@ There are several differences between Iskierka and L-systems. The most notable o
 
 ## Implementation
 
-The directory *src* contains a header-only C++ implementation of IskierkaGen. 
+The file *'src/iskierka.h'* is a header-only C++ implementation of IskierkaGen. 
 It automatically supports both Win32 API and POSIX.
-In the directory *python* there is a Python wrapper around this C++ header file.
-As a result, the Iskierka can be used from both C++ and Python.
+Its directory also contains a Python wrapper around this C++ header file.
+As a result, Iskierka can be used from both C++ and Python.
 
 ## Codebases
 
@@ -49,7 +49,7 @@ Iskierka has some interesting and unique [design patterns](TERMINOLOGY.md).
 ## How to run? (C++)
 
 In the code below we use the header-only C++ implementation of IskierkaGen.
-Make sure to put 'iskierka.h' in the same directory as 'main.cpp'.
+Make sure to put *'iskierka.h'* in the same directory as *'main.cpp'*.
 After compilation, you should prepare an Iskierka codebase (a directory 'data') in the location with the compiled program.
 
 ```
@@ -98,5 +98,4 @@ int main(void)
 
 ## How to run? (Python)
 
-If want to know how to use Iskierka from Python, go to the [designated README.md](python/README.md).
-
+Go to [designated README.md](python/README.md).

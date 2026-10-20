@@ -1,14 +1,17 @@
 
 # Iskierka
 
-Using Iskierka from Python is very easy.
-You can install it from PyPI and use like any typical library.
+This library contains IskierkaGen.
+It uses a codebase written in Iskierka to generate pseudorandom pairs of strings: a command in English + a code in any programming language.
+Useful as synthetic data for AI training, or as rich tests for AI.
+
+## Installation
 
 ```
 python -m pip install iskierka
 ```
 
-Here is the example code.
+## Usage
 
 ```
 import iskierka
@@ -25,4 +28,13 @@ for _ in range(10):
     print(natural)
     print(programming)
     print()
+```
+
+This code produces deterministic output.
+Pick a random seed for data variation.
+
+```
+import secrets
+
+seed = secrets.randbits(64)
 ```
