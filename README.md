@@ -98,7 +98,7 @@ int main(void)
 
 ## How to run? (Python)
 
-Go to [designated README.md](src/README.md).
+To learn about Python, go [here](src).
 
 ## License
 
