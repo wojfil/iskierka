@@ -30,7 +30,7 @@ for _ in range(10):
     print()
 ```
 
-This code produces deterministic output.
+This code above produces deterministic outputs.
 Pick a random seed for data variation.
 
 ```
@@ -42,4 +42,3 @@ seed = secrets.randbits(64)
 ## License
 
 This project is licensed under the MIT License.
-[See LICENSE](LICENSE.txt).
