@@ -515,15 +515,80 @@ struct WrappedFile
 {
 public:
     WrappedFile() = delete;
-    WrappedFile(const std::string& filePath) : m_file(filePath), m_isOpen(m_file.is_open()) { };
-    ~WrappedFile() {
-        if (m_isOpen) {
+    explicit WrappedFile(const std::string& filePath)
+        : m_file(filePath, std::ios::in | std::ios::binary), m_failed(! m_file.is_open()) { };
+
+    bool close() {
+        if (! m_file.is_open()) {
+            return true;
+        }
+
+        try {
+            m_file.clear();
             m_file.close();
+            return ! m_file.fail();
+        }
+        catch (...) {
+            return false;
+        }
+    }
+
+    bool readLine(std::string& line) {
+        line.clear();
+
+        if (m_failed || ! m_file.is_open()) {
+            m_failed = true;
+            return false;
+        }
+
+        if (m_file.eof()) {
+            return false;
+        }
+
+        char c;
+
+        try {
+            while (m_file.get(c)) {
+                if (c == '\n') {
+                    return true;
+                }
+
+                if (c == '\r') {
+                    if (m_file.peek() == '\n') {
+                        m_file.get();
+                    }
+
+                    if (m_file.bad() || (m_file.fail() && !m_file.eof())) {
+                        m_failed = true;
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                line += c;
+            }
+
+            if (m_file.bad() || (m_file.fail() && !m_file.eof())) {
+                m_failed = true;
+                return false;
+            }
+
+            if (m_file.eof()) {
+                return true;
+            }
+
+            m_failed = true;
+            return false;
+        }
+        catch (...) {
+            m_failed = true;
+            return false;
         }
     }
 
     std::ifstream m_file;
-    const bool m_isOpen;
+    bool m_failed;
 };
 
 class IskierkaGen
@@ -737,7 +802,7 @@ private:
     {
         WrappedFile file(filePath);
 
-        if (! file.m_isOpen) {
+        if (file.m_failed) {
             throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
@@ -745,7 +810,7 @@ private:
         std::string line;
         int64_t lineId = 0;
 
-        while (std::getline(file.m_file, line)) {
+        while (file.readLine(line)) {
             trim(line);
             lineId++;
 
@@ -821,8 +886,12 @@ private:
             }
         }
 
-        if (file.m_file.bad()) {
+        if (file.m_failed) {
             throw CompilationError(concat("Iskierka error: failed to read the file '", filePath, "'."));
+        }
+
+        if (! file.close()) {
+            throw CompilationError(concat("Iskierka error: failed to close the file '", filePath, "'."));
         }
 
         switch (mode) {
@@ -847,7 +916,7 @@ private:
     {
         WrappedFile file(filePath);
 
-        if (! file.m_isOpen) {
+        if (file.m_failed) {
             throw CompilationError(concat("Iskierka error: unable to open the file '", filePath, "'."));
         }
 
@@ -861,7 +930,7 @@ private:
         std::vector<Unit> natural;
         std::vector<Unit> programming;
 
-        while (std::getline(file.m_file, line)) {
+        while (file.readLine(line)) {
             trim(line);
             lineId++;
 
@@ -1025,8 +1094,12 @@ private:
             }
         }
         
-        if (file.m_file.bad()) {
+        if (file.m_failed) {
             throw CompilationError(concat("Iskierka error: failed to read the file '", filePath, "'."));
+        }
+
+        if (! file.close()) {
+            throw CompilationError(concat("Iskierka error: failed to close the file '", filePath, "'."));
         }
 
         switch (mode) {
