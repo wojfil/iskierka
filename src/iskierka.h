@@ -811,7 +811,7 @@ private:
         int64_t lineId = 0;
 
         while (file.readLine(line)) {
-            trim(line);
+            rightTrim(line);
             lineId++;
 
             switch (mode) {
@@ -931,7 +931,7 @@ private:
         std::vector<Unit> programming;
 
         while (file.readLine(line)) {
-            trim(line);
+            rightTrim(line);
             lineId++;
 
             switch (mode) {
