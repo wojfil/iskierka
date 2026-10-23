@@ -1090,7 +1090,13 @@ private:
                 }
                 case LineParsingMode::FollowingLine: {
                     if (line.empty()) {
-                        Variable& id = m_variables.find(variableName)->second;
+                        auto find = m_variables.find(variableName);
+                        if (find == m_variables.end()) {
+                            compilationError(concat("the variable '", variableName, 
+                                "' has not been found during compilation"), filePath, lineId);
+                        }
+
+                        Variable& id = find->second;
 
                         if (id.weightIntegerOverflow(weight)) {
                             compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
@@ -1130,7 +1136,13 @@ private:
                 break;
             }
             case LineParsingMode::FollowingLine: {
-                Variable& id = m_variables.find(variableName)->second;
+                auto find = m_variables.find(variableName);
+                if (find == m_variables.end()) {
+                    compilationError(concat("the variable '", variableName, 
+                        "' has not been found during compilation"), filePath, lineId);
+                }
+
+                Variable& id = find->second;
 
                 if (id.weightIntegerOverflow(weight)) {
                     compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
