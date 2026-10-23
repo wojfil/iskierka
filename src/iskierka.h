@@ -409,7 +409,6 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
         if (entry == nullptr) {
             if (errno != 0) {
                 const int error = errno;
-                closedir(dir.m_dir);
 
                 throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
                     "' (errno ", error, ")."));
