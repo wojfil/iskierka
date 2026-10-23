@@ -1192,13 +1192,28 @@ private:
         result.emplace_back(&var->second);
     }
 
+    size_t countLeadingSpaces(const std::string& line) const {
+        for (size_t i = 0; i < line.size(); i++) {
+            if (! isSpace(line[i])) {
+                return i;
+            }
+        }
+
+        return line.size();
+    }
+
     void parseLine(std::vector<Unit>& result, const std::string& line, 
         const std::string& filePath, const int64_t lineId)
     {
         result.clear();
         std::string temp;
 
-        for (size_t i = 0; i < line.size(); i++) {
+        const size_t start = countLeadingSpaces(line);
+        if (start != 0) {
+            result.emplace_back(line.substr(0, start));
+        }
+
+        for (size_t i = start; i < line.size(); i++) {
             const char ch = line[i];
 
             if (! temp.empty() && temp[0] == VARIABLE_PREFIX) {
