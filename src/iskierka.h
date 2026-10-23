@@ -1037,7 +1037,7 @@ private:
                     const std::string textWithNumber = line.substr(integerStart, integerLen);
 
                     if (wrongNumber) {
-                        compilationError(concat("the value '", textWithNumber, "' is not a correct for weight."), filePath, lineId);
+                        compilationError(concat("the value '", textWithNumber, "' is not correct for weight."), filePath, lineId);
                     }
 
                     try {
