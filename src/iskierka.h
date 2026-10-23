@@ -52,7 +52,6 @@ static constexpr uint64_t DEFAULT_ALLOWED_FAILURES_IN_ROW = 16384;
 
 static constexpr int64_t MAX_INT64 = 0x7FFFFFFFFFFFFFFF;
 static constexpr uint64_t MAX_UINT64 = 0xFFFFFFFFFFFFFFFF;
-static constexpr uint64_t MAX_LINE_SIZE = 256ULL * 1024ULL;
 
 // this section of code provides optimized string concatenation
 
@@ -534,7 +533,7 @@ public:
         }
     }
 
-    bool readLine(std::string& line, const std::string& filePath, const int64_t lineId) {
+    bool readLine(std::string& line) {
         line.clear();
 
         if (m_failed || ! m_file.is_open()) {
@@ -568,10 +567,6 @@ public:
                 }
 
                 line += c;
-                if (line.size() > MAX_LINE_SIZE) {
-                    throw CompilationError(concat("Iskierka error in the file '", filePath, "' at line ", 
-                        std::to_string(lineId+1), ": this line is too long."));
-                }
             }
 
             if (m_file.bad() || (m_file.fail() && !m_file.eof())) {
@@ -815,7 +810,7 @@ private:
         std::string line;
         int64_t lineId = 0;
 
-        while (file.readLine(line, filePath, lineId)) {
+        while (file.readLine(line)) {
             rightTrim(line);
             lineId++;
 
@@ -941,7 +936,7 @@ private:
         std::vector<Unit> natural;
         std::vector<Unit> programming;
 
-        while (file.readLine(line, filePath, lineId)) {
+        while (file.readLine(line)) {
             rightTrim(line);
             lineId++;
 
