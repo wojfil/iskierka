@@ -311,7 +311,8 @@ enum LineParsingMode
 {
     FirstLine,
     SecondLine,
-    ThirdLine
+    ThirdLine,
+    FollowingLine
 };
 
 #ifdef _WIN32
@@ -880,7 +881,14 @@ private:
                         compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
-                    mode = LineParsingMode::FirstLine;
+                    mode = LineParsingMode::FollowingLine;
+                    break;
+                }
+                case LineParsingMode::FollowingLine: {
+                    if (line.empty()) {
+                        mode = LineParsingMode::FirstLine;
+                    }
+
                     break;
                 }
             }
@@ -908,7 +916,6 @@ private:
             }
         }
     };
-
 
 // the second pass parses the code
 // and builds all the rules
@@ -1079,14 +1086,28 @@ private:
                         parseLine(programming, line, filePath, lineId);
                     }
 
-                    Variable& id = m_variables.find(variableName)->second;
+                    mode = LineParsingMode::FollowingLine;
+                    break;
+                }
+                case LineParsingMode::FollowingLine: {
+                    if (line.empty()) {
+                        Variable& id = m_variables.find(variableName)->second;
 
-                    if (id.weightIntegerOverflow(weight)) {
-                        compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
+                        if (id.weightIntegerOverflow(weight)) {
+                            compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
+                        }
+
+                        id.insert(natural, programming, weight);
+                        mode = LineParsingMode::FirstLine;
+                    }
+                    else {
+                        programming.emplace_back("\n");
+
+                        if (line != VAR_NOTHING) {
+                            parseLine(programming, line, filePath, lineId);
+                        }
                     }
 
-                    id.insert(natural, programming, weight);
-                    mode = LineParsingMode::FirstLine;
                     break;
                 }
             }
@@ -1107,6 +1128,16 @@ private:
             }
             case LineParsingMode::ThirdLine: {
                 compilationError("the third line of this rule is missing.", filePath, lineId);
+                break;
+            }
+            case LineParsingMode::FollowingLine: {
+                Variable& id = m_variables.find(variableName)->second;
+
+                if (id.weightIntegerOverflow(weight)) {
+                    compilationError("the weight of this rule is too big. An integer overflow happened.", filePath, lineId);
+                }
+
+                id.insert(natural, programming, weight);
                 break;
             }
             default: {
