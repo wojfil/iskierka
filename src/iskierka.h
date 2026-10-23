@@ -1196,7 +1196,7 @@ private:
     void insertVariableUnit(std::vector<Unit>& result, const std::string& temp, 
         const std::string& filePath, const int64_t lineId)
     {
-        if (hasOnlyPrefixChars(temp)) {
+        if (hasOnlyPrefixChars(temp) || temp.size() < 2) {
             result.emplace_back(temp);
             return;
         }
