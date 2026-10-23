@@ -1059,10 +1059,9 @@ private:
                         compilationError("the second line of this rule is missing.", filePath, lineId);
                     }
                     
-                    if (line == VAR_NOTHING) {
-                        natural.clear();
-                    }
-                    else {
+                    natural.clear();
+
+                    if (line != VAR_NOTHING) {
                         parseLine(natural, line, filePath, lineId);
                     }
 
@@ -1074,10 +1073,9 @@ private:
                         compilationError("the third line of this rule is missing.", filePath, lineId);
                     }
 
-                    if (line == VAR_NOTHING) {
-                        programming.clear();
-                    }
-                    else {
+                    programming.clear();
+
+                    if (line != VAR_NOTHING) {
                         parseLine(programming, line, filePath, lineId);
                     }
 
@@ -1205,7 +1203,6 @@ private:
     void parseLine(std::vector<Unit>& result, const std::string& line, 
         const std::string& filePath, const int64_t lineId)
     {
-        result.clear();
         std::string temp;
 
         const size_t start = countLeadingSpaces(line);
