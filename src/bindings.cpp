@@ -2,7 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 
 #include <pybind11/pybind11.h>
-#include "iskierka.h"
+#include "iskierka.hpp"
 
 namespace py = pybind11;
 

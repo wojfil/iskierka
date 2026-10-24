@@ -18,7 +18,7 @@ cmake.source-dir = "."
 sdist.include = [
     "CMakeLists.txt",
     "bindings.cpp",
-    "iskierka.h",
+    "iskierka.hpp",
 ]
 
 [tool.cibuildwheel]
