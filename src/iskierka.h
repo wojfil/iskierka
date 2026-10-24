@@ -360,7 +360,8 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
     const DWORD dirAttributes = GetFileAttributesA(path.c_str());
     if (dirAttributes == INVALID_FILE_ATTRIBUTES || !(dirAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-        throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+        throw CompilationError(concat("Iskierka error: the source directory '", path, 
+            "' could not be opened. It probably does not exist."));
     }
 
     std::vector<std::string> result;
@@ -402,7 +403,8 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
     DirWrapper dir(opendir(path.c_str()));
 
     if (dir.m_dir == nullptr) {
-        throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+        throw CompilationError(concat("Iskierka error: the source directory '", path, 
+            "' could not be opened. It probably does not exist."));
     }
 
     const std::string extension = concat('.', EXTENSION);
