@@ -7,7 +7,7 @@ Inside this 'data', make a file 'output.iski'.
 We will write code here.
 
 Iskierka code consists of *rules*.
-Each of them is a series of three lines of text.
+Each of them is a series of at least three lines of text.
 
 ```
 #output
@@ -16,8 +16,8 @@ print('hello, world')
 ```
 
 The first one starts with *#* and is followed by a variable name.
-The second line contains natural language text.
-The third line is a code written in some programming language.
+The second line contains natural language text pattern.
+The following lines form a pattern of code written in some programming language.
 
 Every codebase needs at least one rule with variable *output*. Strings are built from here.
 
@@ -113,5 +113,18 @@ __nothing
 __nothing
 __nothing
 ```
+
+Rules can have more than 3 lines of text. 
+Every line after the third line extends it, so the programming language code can be multiline and with indentations.
+Line breaks are normalized to \n.
+
+```
+#output
+test
+if True:
+    print('hello world')
+    print('hello world2')
+```
+
 
 This is the entire language.
