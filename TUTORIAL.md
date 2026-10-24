@@ -1,9 +1,8 @@
 
 # IskierkaGen quick tutorial
 
-I assume you are using the header-only C++ version of Iskierka.
-Create an empty directory named 'data' in the same folder as your compiled program.
-Inside this 'data', make a file 'output.iski'.
+Create an empty directory named 'data'.
+Inside this directory, make a file 'output.iski'.
 We will write code here.
 
 Iskierka code consists of *rules*.
@@ -19,7 +18,7 @@ The first one starts with *#* and is followed by a variable name.
 The second line contains natural language text pattern.
 The following lines form a pattern of code written in some programming language.
 
-Every codebase needs at least one rule with variable *output*. Strings are built from here.
+Every codebase needs at least one rule with the variable *output*. Strings are built from here.
 
 ```
 #output
@@ -114,7 +113,7 @@ __nothing
 __nothing
 ```
 
-Rules can have more than 3 lines of text. 
+The rules can have more than 3 lines of text. 
 Every line after the third line extends it, so the programming language code can be multiline and with indentations.
 Line breaks are normalized to \n.
 
