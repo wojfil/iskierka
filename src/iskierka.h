@@ -358,6 +358,11 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
 #ifdef _WIN32
 
+    const DWORD dirAttributes = GetFileAttributesA(path.c_str());
+    if (dirAttributes == INVALID_FILE_ATTRIBUTES || !(dirAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        throw CompilationError(concat("Iskierka error: the source directory '", path, "' could not be opened."));
+    }
+
     std::vector<std::string> result;
     WIN32_FIND_DATAA findFileData;
     const std::string searchPattern = concat(path, "/*.", EXTENSION);
