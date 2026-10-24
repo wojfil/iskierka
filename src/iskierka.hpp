@@ -1164,12 +1164,6 @@ private:
         }
     };
 
-    void trim(std::string& value) const
-    {
-        leftTrim(value);
-        rightTrim(value);
-    }
-
     void leftTrim(std::string& value) const
     {
         for (size_t i = 0; i < value.size(); i++) {
