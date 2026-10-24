@@ -4,6 +4,7 @@
 This library contains IskierkaGen.
 It uses a codebase written in Iskierka to generate pseudorandom pairs of strings: a command in English + a code in any programming language.
 Useful as synthetic data for AI training, or as rich tests for AI.
+Check this [presentation video](https://www.youtube.com/watch?v=Y6TnbvZ4cko).
 
 ## Installation
 
