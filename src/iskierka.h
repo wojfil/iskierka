@@ -370,7 +370,7 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
     HandleWrapper hFind(FindFirstFileA(searchPattern.c_str(), &findFileData));
     if (hFind.m_handle == INVALID_HANDLE_VALUE) {
-        throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '", 
+        throw CompilationError(concat("Iskierka error: failed to find *.iski files in the source directory '",
             path, "'."));
     }
 
@@ -389,8 +389,8 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
     const DWORD error = GetLastError();
 
     if (error != ERROR_NO_MORE_FILES) {
-        throw CompilationError(concat("Iskierka error: failed to enumerate files in the source directory '",
-            path, "' (Windows error: ", error, ")."));
+        throw CompilationError(concat("Iskierka error: failed to find *.iski files in the source directory '",
+            path, "'."));
     }
 
     std::sort(result.begin(), result.end());
@@ -415,10 +415,8 @@ static std::vector<std::string> getFilesInDirectory(const std::string& path)
 
         if (entry == nullptr) {
             if (errno != 0) {
-                const int error = errno;
-
-                throw CompilationError(concat("Iskierka error: failed to read the source directory '", path,
-                    "' (errno ", error, ")."));
+                throw CompilationError(concat("Iskierka error: failed to find *.iski files in the source directory '",
+                    path, "'."));
             }
 
             break;
