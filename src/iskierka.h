@@ -515,6 +515,8 @@ struct WrappedFile
 {
 public:
     WrappedFile() = delete;
+    WrappedFile(const WrappedFile&) = delete;
+    WrappedFile& operator=(const WrappedFile&) = delete;
     explicit WrappedFile(const std::string& filePath)
         : m_file(filePath, std::ios::in | std::ios::binary), m_failed(! m_file.is_open()) { };
 
