@@ -49,8 +49,8 @@ Iskierka has some interesting and unique [design patterns](TERMINOLOGY.md).
 ## How to run? (C++)
 
 In the code below we use the header-only C++ implementation of IskierkaGen.
-Make sure to put [iskierka.hpp](src/iskierka.hpp) inside the same directory as *'main.cpp'*.
-After compilation, you should prepare an Iskierka codebase (a directory 'data') in the location with the compiled program.
+Make sure to put [iskierka.hpp](src/iskierka.hpp) inside the same directory as *main.cpp*.
+After compilation, you should prepare an Iskierka codebase (a directory named *data*) in the location with the compiled program.
 
 ```
 #include "iskierka.hpp"
